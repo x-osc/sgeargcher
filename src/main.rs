@@ -1,4 +1,4 @@
-use crate::scrapers::marginalia;
+use crate::scrapers::brave;
 
 mod scrapers;
 
@@ -8,7 +8,7 @@ async fn main() {
         .nth(1)
         .unwrap_or_else(|| "goats".to_string());
 
-    match marginalia::search(&query).await {
+    match brave::search(&query).await {
         Ok(results) if results.is_empty() => println!("no results"),
         Ok(results) => {
             for r in results.iter() {
