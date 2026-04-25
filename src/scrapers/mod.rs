@@ -1,4 +1,5 @@
 pub mod duckduckgo;
+pub mod marginalia;
 
 #[derive(Debug)]
 pub struct SearchResult {
