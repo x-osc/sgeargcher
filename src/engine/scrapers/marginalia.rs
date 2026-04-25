@@ -1,37 +1,43 @@
-use std::{error::Error, time::Duration};
+use std::time::Duration;
 
+use async_trait::async_trait;
 use scraper::{Html, Selector};
 use wreq_util::{Emulation, EmulationOS, EmulationOption};
 
-use crate::scrapers::SearchResult;
+use crate::engine::scrapers::{Engine, SearchQuery, SearchResult};
 
 const DOMAIN: &str = "https://old-search.marginalia.nu";
 
-pub async fn search(query: &str) -> Result<Vec<SearchResult>, Box<dyn Error>> {
-    let encoded = urlencoding::encode(query);
-    let url = format!("{DOMAIN}/search?query={}", encoded);
+pub struct MarginaliaSearch;
 
-    let client = wreq::Client::builder()
-        .emulation(
-            EmulationOption::builder()
-                .emulation(Emulation::Chrome133)
-                .emulation_os(EmulationOS::Windows)
-                .build(),
-        )
-        .build()?;
+#[async_trait]
+impl Engine for MarginaliaSearch {
+    async fn search(&self, query: SearchQuery) -> anyhow::Result<Vec<SearchResult>> {
+        let encoded = urlencoding::encode(&query.query);
+        let url = format!("{DOMAIN}/search?query={}", encoded);
 
-    let mut html = client.get(&url).send().await?.text().await?;
-    // detect bot check
-    if html.contains("sst=") && html.contains("barraged by queries from bots") {
-        // TODO: proper logging
-        println!("bot checked");
-        // TODO: unwrap
-        let new_url = extract_retry_url(&html).unwrap();
-        tokio::time::sleep(Duration::from_millis(400)).await;
-        html = client.get(&new_url).send().await?.text().await?;
+        let client = wreq::Client::builder()
+            .emulation(
+                EmulationOption::builder()
+                    .emulation(Emulation::Chrome133)
+                    .emulation_os(EmulationOS::Windows)
+                    .build(),
+            )
+            .build()?;
+
+        let mut html = client.get(&url).send().await?.text().await?;
+        // detect bot check
+        if html.contains("sst=") && html.contains("barraged by queries from bots") {
+            // TODO: proper logging
+            println!("bot checked");
+            // TODO: unwrap
+            let new_url = extract_retry_url(&html).unwrap();
+            tokio::time::sleep(Duration::from_millis(400)).await;
+            html = client.get(&new_url).send().await?.text().await?;
+        }
+
+        Ok(parse_results(&html))
     }
-
-    Ok(parse_results(&html))
 }
 
 pub fn extract_retry_url(html: &str) -> Option<String> {
