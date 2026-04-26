@@ -5,7 +5,7 @@ pub mod duckduckgo;
 pub mod marginalia;
 
 #[derive(Debug)]
-pub struct SearchResult {
+pub struct EngineResponse {
     pub title: String,
     pub url: String,
     pub description: String,
@@ -13,7 +13,7 @@ pub struct SearchResult {
 
 #[async_trait]
 pub trait Engine: Send + Sync {
-    async fn search(&self, query: SearchQuery) -> anyhow::Result<Vec<SearchResult>>;
+    async fn search(&self, query: SearchQuery) -> anyhow::Result<Vec<EngineResponse>>;
 }
 
 #[derive(Debug, Clone)]

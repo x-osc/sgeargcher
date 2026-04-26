@@ -1334,6 +1334,7 @@ dependencies = [
  "futures",
  "scraper",
  "tokio",
+ "url",
  "urlencoding",
  "wreq",
  "wreq-util",

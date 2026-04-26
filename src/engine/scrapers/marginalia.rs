@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use scraper::{Html, Selector};
 use wreq_util::{Emulation, EmulationOS, EmulationOption};
 
-use crate::engine::scrapers::{Engine, SearchQuery, SearchResult};
+use crate::engine::scrapers::{Engine, EngineResponse, SearchQuery};
 
 const DOMAIN: &str = "https://old-search.marginalia.nu";
 
@@ -12,7 +12,7 @@ pub struct MarginaliaSearch;
 
 #[async_trait]
 impl Engine for MarginaliaSearch {
-    async fn search(&self, query: SearchQuery) -> anyhow::Result<Vec<SearchResult>> {
+    async fn search(&self, query: SearchQuery) -> anyhow::Result<Vec<EngineResponse>> {
         let encoded = urlencoding::encode(&query.query);
         let url = format!("{DOMAIN}/search?query={}", encoded);
 
@@ -51,7 +51,7 @@ pub fn extract_retry_url(html: &str) -> Option<String> {
         .map(|href| format!("{DOMAIN}{href}"))
 }
 
-fn parse_results(html: &str) -> Vec<SearchResult> {
+fn parse_results(html: &str) -> Vec<EngineResponse> {
     let document = Html::parse_document(html);
 
     let result_sel = Selector::parse(".search-result").unwrap();
@@ -88,7 +88,7 @@ fn parse_results(html: &str) -> Vec<SearchResult> {
                 return None;
             }
 
-            Some(SearchResult {
+            Some(EngineResponse {
                 title,
                 url,
                 description,
