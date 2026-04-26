@@ -2,7 +2,8 @@ use crate::engine::{
     EngineMetadata, MetaSearcher,
     ranking::merge_and_rank_responses,
     scrapers::{
-        SearchQuery, brave::BraveSearch, duckduckgo::DuckDuckGoSearch, marginalia::MarginaliaSearch,
+        SearchQuery, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
+        marginalia::MarginaliaSearch, wiby::WibySearch,
     },
 };
 
@@ -22,11 +23,15 @@ async fn main() {
     );
     searcher.add_engine(
         Box::new(MarginaliaSearch),
-        EngineMetadata::new("marginalia").weight(0.4),
+        EngineMetadata::new("marginalia").weight(0.5),
     );
     searcher.add_engine(
         Box::new(BraveSearch),
-        EngineMetadata::new("brave").weight(0.7),
+        EngineMetadata::new("brave").weight(0.8),
+    );
+    searcher.add_engine(
+        Box::new(WibySearch),
+        EngineMetadata::new("wiby").weight(0.15),
     );
 
     let responses = searcher.get_all_responses(SearchQuery { query }).await;
@@ -34,7 +39,10 @@ async fn main() {
         .into_iter()
         .filter_map(|(id, r)| match r {
             Ok(r) => Some((searcher.get_metadata(&id).unwrap().clone(), r)),
-            Err(_) => None,
+            Err(e) => {
+                println!("{}", e);
+                None
+            }
         })
         .collect();
     let results = merge_and_rank_responses(responses);

@@ -3,6 +3,7 @@ use async_trait::async_trait;
 pub mod brave;
 pub mod duckduckgo;
 pub mod marginalia;
+pub mod wiby;
 
 #[derive(Debug)]
 pub struct EngineResponse {
