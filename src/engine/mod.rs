@@ -3,10 +3,30 @@ use std::{collections::HashMap, time::Duration};
 use anyhow::Context;
 use futures::future::join_all;
 
-use crate::engine::scrapers::{Engine, EngineResponse, SearchQuery};
+use crate::engine::{
+    ranking::merge_and_rank_responses,
+    scrapers::{Engine, EngineResponse, SearchQuery},
+};
 
 pub mod ranking;
 pub mod scrapers;
+
+pub async fn run_search(searcher: MetaSearcher, query: SearchQuery) -> Vec<SearchResult> {
+    let responses = searcher.get_all_responses(query).await;
+    let responses: Vec<_> = responses
+        .into_iter()
+        .filter_map(|(id, r)| match r {
+            Ok(r) => Some((searcher.get_metadata(&id).unwrap().clone(), r)),
+            Err(e) => {
+                println!("{}", e);
+                None
+            }
+        })
+        .collect();
+    let results = merge_and_rank_responses(responses);
+
+    results
+}
 
 #[derive(Debug, Clone)]
 pub struct EngineMetadata {

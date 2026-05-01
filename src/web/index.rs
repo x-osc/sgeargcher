@@ -9,9 +9,9 @@ pub async fn get() -> Markup {
                 title { "sgeargcher" }
             }
             body {
-                form action="/search" method="get" {
-                    input type="text" name="q" placeholder="sgeargch...";
-                    button { "sgeargch" }
+                form #searchinput action="/search" method="get" {
+                    input type="text" name="q" placeholder="sgeargch..." autofocus onfocus="this.select()" autocomplete="off";
+                    input type="submit" value="sgeargch";
                 }
             }
         }
