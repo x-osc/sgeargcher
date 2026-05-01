@@ -8,7 +8,7 @@ use maud::{DOCTYPE, Markup, html};
 
 use crate::{
     engine::{SearchResult, run_search, scrapers::SearchQuery},
-    web::get_config,
+    web::{get_config, html_head},
 };
 
 pub async fn get(Query(params): Query<HashMap<String, String>>) -> Response {
@@ -28,13 +28,10 @@ pub async fn get(Query(params): Query<HashMap<String, String>>) -> Response {
     html! {
         (DOCTYPE)
         html {
-            head {
-                meta charset="utf-8";
-                title { "sgeargcher" }
-            }
+            (html_head(Some(query)))
             body {
                 form #searchinput action="/search" method="get" {
-                    input type="text" name="q" placeholder="sgeargch..." value=(query) autofocus onfocus="this.select()" autocomplete="off";
+                    input type="text" name="q" placeholder="sgeargch..." value=(query) onfocus="this.select()" autocomplete="off";
                     input type="submit" value="sgeargch";
                 }
 

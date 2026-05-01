@@ -1,4 +1,5 @@
 use axum::{Router, routing::get};
+use maud::{Markup, html};
 
 use crate::engine::{
     EngineMetadata, MetaSearcher,
@@ -20,6 +21,22 @@ pub async fn run() {
         .await
         .unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+fn html_head(title: Option<&str>) -> Markup {
+    html! {
+        head {
+            meta charset="utf-8";
+            meta name="viewport" content="width=device-width, initial-scale=1.0";
+            title {
+                @if let Some(title) = title {
+                    { (title) }
+                    " - "
+                }
+                "sgeargcher"
+            }
+        }
+    }
 }
 
 fn get_config() -> MetaSearcher {
