@@ -11,6 +11,11 @@ pub fn merge_and_rank_responses(
     // url to result
     let mut final_results: HashMap<String, SearchResult> = HashMap::new();
 
+    let engine_weights: HashMap<String, f64> = responses
+        .iter()
+        .map(|(engine, _)| (engine.name.clone(), engine.weight))
+        .collect();
+
     for (engine, results) in responses {
         for (response_index, engine_response) in results.into_iter().enumerate() {
             // 2 is adjustable constant
@@ -50,6 +55,14 @@ pub fn merge_and_rank_responses(
         b.score
             .partial_cmp(&a.score)
             .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    // cant be bothered to do this properly
+    results_vec.iter_mut().for_each(|r| {
+        r.engines.sort_by(|a, b| {
+            engine_weights[b]
+                .partial_cmp(&engine_weights[a])
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
     });
     results_vec
 }
