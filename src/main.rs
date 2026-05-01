@@ -1,17 +1,23 @@
-use crate::engine::{
-    EngineMetadata, MetaSearcher,
-    ranking::merge_and_rank_responses,
-    scrapers::{
-        SearchQuery, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
-        marginalia::MarginaliaSearch, wiby::WibySearch,
+use crate::{
+    engine::{
+        EngineMetadata, MetaSearcher,
+        ranking::merge_and_rank_responses,
+        scrapers::{
+            SearchQuery, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
+            marginalia::MarginaliaSearch, wiby::WibySearch,
+        },
     },
+    web::run,
 };
 
 mod engine;
 mod url;
+mod web;
 
 #[tokio::main]
 async fn main() {
+    run().await;
+
     let query = std::env::args()
         .nth(1)
         .unwrap_or_else(|| "goats".to_string());
@@ -46,6 +52,4 @@ async fn main() {
         })
         .collect();
     let results = merge_and_rank_responses(responses);
-
-    println!("{:#?}", results)
 }
