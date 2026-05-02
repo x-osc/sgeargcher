@@ -1592,6 +1592,7 @@ dependencies = [
  "maud",
  "mime_guess",
  "percent-encoding",
+ "regex",
  "rust-embed",
  "scraper",
  "tokio",

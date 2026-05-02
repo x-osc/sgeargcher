@@ -1,0 +1,37 @@
+use async_trait::async_trait;
+
+use crate::engine::scrapers::SearchContext;
+
+pub mod ip;
+
+#[async_trait]
+pub trait AnswerEngine: Send + Sync {
+    async fn query(&self, search: SearchContext) -> Option<String>;
+}
+
+#[derive(Debug, Clone)]
+pub struct AnswerEngineMetadata {
+    pub name: String,
+}
+
+impl AnswerEngineMetadata {
+    pub fn new(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            ..Default::default()
+        }
+    }
+}
+
+impl Default for AnswerEngineMetadata {
+    fn default() -> Self {
+        Self {
+            name: "unknown".to_string(),
+        }
+    }
+}
+
+pub struct AnswerEngineEntry {
+    pub engine: Box<dyn AnswerEngine>,
+    pub metadata: AnswerEngineMetadata,
+}

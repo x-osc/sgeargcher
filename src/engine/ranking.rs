@@ -2,7 +2,7 @@ use std::collections::{HashMap, hash_map};
 
 use crate::{
     engine::{EngineMetadata, SearchResult, scrapers::EngineResponse},
-    url::normalize_url,
+    utils::url::normalize_url,
 };
 
 pub fn merge_and_rank_responses(

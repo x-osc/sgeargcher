@@ -6,8 +6,8 @@ use scraper::{Html, Selector};
 use wreq_util::{Emulation, EmulationOS, EmulationOption};
 
 use crate::{
-    engine::scrapers::{Engine, EngineResponse, SearchQuery},
-    url::FRAGMENT,
+    engine::scrapers::{Engine, EngineResponse, SearchContext},
+    utils::url::FRAGMENT,
 };
 
 const DOMAIN: &str = "https://old-search.marginalia.nu";
@@ -16,7 +16,7 @@ pub struct MarginaliaSearch;
 
 #[async_trait]
 impl Engine for MarginaliaSearch {
-    async fn search(&self, query: SearchQuery) -> anyhow::Result<Vec<EngineResponse>> {
+    async fn query(&self, query: SearchContext) -> anyhow::Result<Vec<EngineResponse>> {
         let encoded = utf8_percent_encode(&query.query, FRAGMENT);
         let url = format!("{DOMAIN}/search?query={}", encoded);
 

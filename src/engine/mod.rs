@@ -1,18 +1,31 @@
 use std::{collections::HashMap, time::Duration};
 
 use anyhow::Context;
-use futures::future::join_all;
+use futures::{StreamExt, future::join_all, stream::FuturesUnordered};
+use maud::PreEscaped;
+use tokio::time::timeout;
 
 use crate::engine::{
+    answers::{AnswerEngine, AnswerEngineEntry, AnswerEngineMetadata},
     ranking::merge_and_rank_responses,
-    scrapers::{Engine, EngineResponse, SearchQuery},
+    scrapers::{Engine, EngineEntry, EngineMetadata, EngineResponse, SearchContext},
 };
 
+pub mod answers;
 pub mod ranking;
 pub mod scrapers;
 
-pub async fn run_search(searcher: MetaSearcher, query: SearchQuery) -> Vec<SearchResult> {
-    let responses = searcher.get_all_responses(query).await;
+pub struct MetaSearchResult {
+    pub answer: Option<AnswerResult>,
+    pub results: Vec<SearchResult>,
+}
+
+pub async fn run_search(searcher: MetaSearcher, query: SearchContext) -> MetaSearchResult {
+    let (responses, answer) = tokio::join!(
+        searcher.get_all_responses(query.clone()),
+        searcher.get_answer(query)
+    );
+
     let responses: Vec<_> = responses
         .into_iter()
         .filter_map(|(id, r)| match r {
@@ -25,41 +38,7 @@ pub async fn run_search(searcher: MetaSearcher, query: SearchQuery) -> Vec<Searc
         .collect();
     let results = merge_and_rank_responses(responses);
 
-    results
-}
-
-#[derive(Debug, Clone)]
-pub struct EngineMetadata {
-    pub name: String,
-    pub weight: f64,
-}
-
-impl EngineMetadata {
-    pub fn new(name: &str) -> Self {
-        Self {
-            name: name.to_string(),
-            ..Default::default()
-        }
-    }
-
-    pub fn weight(mut self, weight: f64) -> Self {
-        self.weight = weight;
-        self
-    }
-}
-
-struct EngineEntry {
-    pub engine: Box<dyn Engine>,
-    pub metadata: EngineMetadata,
-}
-
-impl Default for EngineMetadata {
-    fn default() -> Self {
-        Self {
-            name: "unknown".to_string(),
-            weight: 1.0,
-        }
-    }
+    MetaSearchResult { answer, results }
 }
 
 #[derive(Debug)]
@@ -72,14 +51,22 @@ pub struct SearchResult {
     highest_engine_weight: f64,
 }
 
+#[derive(Debug)]
+pub struct AnswerResult {
+    pub engine: String,
+    pub html: PreEscaped<String>,
+}
+
 pub struct MetaSearcher {
     engines: HashMap<String, EngineEntry>,
+    answer_engines: Vec<AnswerEngineEntry>,
 }
 
 impl MetaSearcher {
     pub fn new() -> Self {
         Self {
             engines: HashMap::new(),
+            answer_engines: Vec::new(),
         }
     }
 
@@ -92,15 +79,24 @@ impl MetaSearcher {
         self.engines.get(engine_id).map(|e| &e.metadata)
     }
 
+    pub fn add_answer_engine(
+        &mut self,
+        engine: Box<dyn AnswerEngine>,
+        metadata: AnswerEngineMetadata,
+    ) {
+        self.answer_engines
+            .push(AnswerEngineEntry { engine, metadata });
+    }
+
     pub async fn get_all_responses(
         &self,
-        query: SearchQuery,
+        query: SearchContext,
     ) -> HashMap<String, anyhow::Result<Vec<EngineResponse>>> {
         let futures = self.engines.iter().map(|(id, engine_entry)| {
             let q = query.clone();
             async move {
                 let result =
-                    tokio::time::timeout(Duration::from_secs(5), engine_entry.engine.search(q))
+                    tokio::time::timeout(Duration::from_secs(5), engine_entry.engine.query(q))
                         .await
                         .context("Search timed out")
                         .and_then(|res| res.map_err(anyhow::Error::from));
@@ -112,5 +108,56 @@ impl MetaSearcher {
         let results_list = join_all(futures).await;
 
         results_list.into_iter().collect()
+    }
+
+    pub async fn get_answer(&self, query: SearchContext) -> Option<AnswerResult> {
+        let mut futures = FuturesUnordered::new();
+
+        for (index, engine_entry) in self.answer_engines.iter().enumerate() {
+            let q = query.clone();
+            let name = engine_entry.metadata.name.clone();
+
+            futures.push(async move {
+                let result = engine_entry.engine.query(q).await;
+
+                (index, name, result)
+            });
+        }
+
+        // return highest priority Some value, or else None
+
+        let fut = async {
+            let mut next = 0;
+            let mut pending = HashMap::new();
+
+            while let Some((index, name, result)) = futures.next().await {
+                if index == next {
+                    if let Some(html) = result {
+                        return Some(AnswerResult {
+                            engine: name,
+                            html: PreEscaped(html),
+                        });
+                    }
+
+                    next += 1;
+
+                    while let Some((name, value)) = pending.remove(&next) {
+                        if let Some(html) = value {
+                            return Some(AnswerResult {
+                                engine: name,
+                                html: PreEscaped(html),
+                            });
+                        }
+                        next += 1;
+                    }
+                } else {
+                    pending.insert(index, (name, result));
+                }
+            }
+
+            None
+        };
+
+        timeout(Duration::from_secs(5), fut).await.ok().flatten()
     }
 }

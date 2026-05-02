@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use axum::{
     Router,
     extract::Path,
@@ -9,10 +11,11 @@ use maud::{DOCTYPE, Markup, html};
 use rust_embed::RustEmbed;
 
 use crate::engine::{
-    EngineMetadata, MetaSearcher,
+    MetaSearcher,
+    answers::{AnswerEngineMetadata, ip::IpAnswer},
     scrapers::{
-        brave::BraveSearch, duckduckgo::DuckDuckGoSearch, marginalia::MarginaliaSearch,
-        mojeek::MojeekSearch, wiby::WibySearch,
+        EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
+        marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
     },
 };
 
@@ -33,7 +36,12 @@ pub async fn run() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }
 
 fn get_config() -> MetaSearcher {
@@ -58,6 +66,8 @@ fn get_config() -> MetaSearcher {
         Box::new(MojeekSearch),
         EngineMetadata::new("mojeek").weight(0.5),
     );
+
+    searcher.add_answer_engine(Box::new(IpAnswer), AnswerEngineMetadata::new("ip"));
 
     searcher
 }
