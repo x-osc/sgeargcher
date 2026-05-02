@@ -28,15 +28,17 @@ pub async fn get(Query(params): Query<HashMap<String, String>>) -> Response {
     html! {
         (DOCTYPE)
         html {
-            (html_head(Some(query)))
-            body {
-                form #searchinput action="/search" method="get" {
-                    input type="text" name="q" placeholder="sgeargch..." value=(query) onfocus="this.select()" autocomplete="off";
-                    input type="submit" value="sgeargch";
-                }
+            (html_head(&format!("{query} - sgeargcher")))
+            body.search-page {
+                main {
+                    form #search-form action="/search" method="get" {
+                        input.search-input type="text" name="q" placeholder="sgeargch..." value=(query) autocomplete="off";
+                        input.search-submit type="submit" value="sgeargch";
+                    }
 
-                @for result in results {
-                    (single_search_result(result))
+                    @for result in results {
+                        (single_search_result(result))
+                    }
                 }
             }
         }

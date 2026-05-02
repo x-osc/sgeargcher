@@ -1,0 +1,131 @@
+:root {
+    --bg-1: #181616;
+    --bg-2: #12120f;
+    --bg-3: #1d1c19;
+    --bg-4: #393836;
+
+    --fg-1: #c5c9c5;
+    --fg-2: #a6a69c;
+    --fg-3: #2d4f67;
+
+    --accent: #c8c093;
+
+    --link: #8ea4a2;
+    --link-visited: #938aa9;
+}
+
+::selection {
+    background-color: var(--accent);
+    color: var(--fg-3);
+}
+
+body,
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--bg-2);
+    color: var(--fg-1);
+    box-sizing: border-box;
+    font-family: monospace;
+    line-height: 1.2;
+}
+
+.index-page main {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.index-page main h1 {
+    text-align: center;
+}
+
+.search-page main {
+    max-width: 45rem;
+    padding: 1rem 0.5rem;
+    background: var(--bg-1);
+    min-height: 100%;
+    margin-left: calc((70rem - 45rem) / 2);
+}
+@media screen and (max-width: 70rem) {
+    .search-page main {
+        margin: 0 auto;
+    }
+}
+
+input {
+    font-family: monospace;
+    background: var(--bg-3);
+    color: var(--fg-1);
+    border: 1px solid var(--bg-4);
+    font-size: inherit;
+    padding: 0.25rem;
+}
+input:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.center-container {
+    width: 50%;
+    max-width: 25rem;
+}
+
+#search-form {
+    vertical-align: middle;
+    display: flex;
+    gap: 0.5rem;
+}
+.search-input {
+    flex: 1;
+}
+.search-submit {
+    cursor: pointer;
+}
+.search-submit:active {
+    border-color: var(--accent);
+}
+
+.search-page #search-form {
+    margin-bottom: 0.4rem;
+}
+
+a {
+    color: var(--link);
+    text-decoration: none;
+}
+a:visited {
+    color: var(--link-visited);
+}
+
+.result {
+    margin-top: 0.2rem;
+    border-top: 1px solid var(--bg-4);
+}
+
+.title {
+    margin-top: 0.6rem;
+    margin-bottom: 0.1rem;
+}
+
+.description {
+    margin-top: 0.7rem;
+    margin-bottom: 0.2rem;
+}
+
+.url a {
+    color: var(--fg-2);
+}
+
+.engines {
+    display: flex;
+    justify-content: end;
+    font-size: 12px;
+    gap: 0.5em;
+    color: var(--fg-2);
+}
