@@ -2,6 +2,7 @@ use async_trait::async_trait;
 
 use crate::engine::scrapers::SearchContext;
 
+pub mod dictionary;
 pub mod ip;
 pub mod lorem_ipsum;
 

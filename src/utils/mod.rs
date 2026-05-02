@@ -12,3 +12,11 @@ macro_rules! regex {
         &RE
     }};
 }
+
+pub fn to_title_case(text: &str) -> String {
+    let mut chars = text.chars();
+    match chars.next() {
+        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+        None => String::new(),
+    }
+}

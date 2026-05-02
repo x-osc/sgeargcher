@@ -13,9 +13,11 @@ pub struct LoremIpsumAnswer;
 #[async_trait]
 impl AnswerEngine for LoremIpsumAnswer {
     async fn query(&self, search: SearchContext) -> Option<String> {
+        let query = search.query.trim().to_lowercase();
+
         let regex_matches = regex!(
-            r"^((generate)|(give me)|(i need)|(what is)|(full)|\w*\s+)?((lorem ipsum)|(lipsum)|(ipsum dolor))"
-        ).is_match(&search.query);
+            r"^(((generate)|(give me)|(i need)|(what is)|(full)|\w*)\s+)?((lorem ipsum)|(lipsum)|(ipsum dolor))"
+        ).is_match(&query);
 
         let is_placeholder = [
             "placeholder text",
@@ -26,7 +28,7 @@ impl AnswerEngine for LoremIpsumAnswer {
             "fake latin paragraph",
         ]
         .iter()
-        .any(|p| search.query.to_lowercase().trim().contains(p));
+        .any(|p| query.contains(p));
 
         if !(regex_matches || is_placeholder) {
             return None;

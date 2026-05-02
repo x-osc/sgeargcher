@@ -151,3 +151,18 @@ p.grey {
     font-weight: bold;
     color: var(--fg-1);
 }
+
+.dictionary-word {
+    margin-top: 0.4rem;
+    margin-bottom: 0.3rem;
+}
+
+.dictionary-part-of-speech {
+    color: var(--fg-2);
+    font-style: italic;
+}
+
+.dictionary-example {
+    margin-top: 0.8rem;
+    margin-bottom: 0.8rem;
+}

@@ -11,7 +11,9 @@ pub struct IpAnswer;
 #[async_trait]
 impl AnswerEngine for IpAnswer {
     async fn query(&self, search: SearchContext) -> Option<String> {
-        if !regex!("^(what('s|s| is)? )?(my )?ip").is_match(&search.query.trim()) {
+        let query = search.query.trim();
+
+        if !regex!(r"^(what('s|s| is)?\s+)?(my\s+)?ip").is_match(&query) {
             return None;
         }
 
