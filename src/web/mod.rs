@@ -5,7 +5,7 @@ use crate::engine::{
     EngineMetadata, MetaSearcher,
     scrapers::{
         brave::BraveSearch, duckduckgo::DuckDuckGoSearch, marginalia::MarginaliaSearch,
-        wiby::WibySearch,
+        mojeek::MojeekSearch, wiby::WibySearch,
     },
 };
 
@@ -47,7 +47,7 @@ fn get_config() -> MetaSearcher {
     );
     searcher.add_engine(
         Box::new(MarginaliaSearch),
-        EngineMetadata::new("marginalia").weight(0.5),
+        EngineMetadata::new("marginalia").weight(0.6),
     );
     searcher.add_engine(
         Box::new(BraveSearch),
@@ -56,6 +56,10 @@ fn get_config() -> MetaSearcher {
     searcher.add_engine(
         Box::new(WibySearch),
         EngineMetadata::new("wiby").weight(0.15),
+    );
+    searcher.add_engine(
+        Box::new(MojeekSearch),
+        EngineMetadata::new("mojeek").weight(0.5),
     );
 
     searcher
