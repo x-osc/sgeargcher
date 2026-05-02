@@ -40,13 +40,6 @@ pub fn normalize_url(url: &str) -> String {
 
     if let Some(host) = url.host_str() {
         match host {
-            h if h.ends_with("wikipedia.org") => {
-                let path = url.path();
-                if let Some(rest) = path.strip_prefix("/wiki/") {
-                    let normalized = format!("/wiki/{}", rest.to_lowercase());
-                    url.set_path(&normalized);
-                }
-            }
             h if h.ends_with("reddit.com") => {
                 let path = url.path().to_lowercase();
                 url.set_path(&path);
