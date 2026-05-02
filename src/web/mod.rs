@@ -12,7 +12,7 @@ use rust_embed::RustEmbed;
 
 use crate::engine::{
     MetaSearcher,
-    answers::{AnswerEngineMetadata, ip::IpAnswer},
+    answers::{AnswerEngineMetadata, ip::IpAnswer, lorem_ipsum::LoremIpsumAnswer},
     scrapers::{
         EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
         marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
@@ -68,6 +68,10 @@ fn get_config() -> MetaSearcher {
     );
 
     searcher.add_answer_engine(Box::new(IpAnswer), AnswerEngineMetadata::new("ip"));
+    searcher.add_answer_engine(
+        Box::new(LoremIpsumAnswer),
+        AnswerEngineMetadata::new("lorem ipsum"),
+    );
 
     searcher
 }

@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use crate::engine::scrapers::SearchContext;
 
 pub mod ip;
+pub mod lorem_ipsum;
 
 #[async_trait]
 pub trait AnswerEngine: Send + Sync {
