@@ -1,10 +1,14 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use percent_encoding::utf8_percent_encode;
 use scraper::{Html, Selector};
 use wreq_util::{Emulation, EmulationOS, EmulationOption};
 
-use crate::engine::scrapers::{Engine, EngineResponse, SearchQuery};
+use crate::{
+    engine::scrapers::{Engine, EngineResponse, SearchQuery},
+    url::FRAGMENT,
+};
 
 const DOMAIN: &str = "https://old-search.marginalia.nu";
 
@@ -13,7 +17,7 @@ pub struct MarginaliaSearch;
 #[async_trait]
 impl Engine for MarginaliaSearch {
     async fn search(&self, query: SearchQuery) -> anyhow::Result<Vec<EngineResponse>> {
-        let encoded = urlencoding::encode(&query.query);
+        let encoded = utf8_percent_encode(&query.query, FRAGMENT);
         let url = format!("{DOMAIN}/search?query={}", encoded);
 
         let client = wreq::Client::builder()

@@ -1,17 +1,21 @@
 use core::str;
 
 use async_trait::async_trait;
+use percent_encoding::utf8_percent_encode;
 use scraper::{Html, Selector};
 use wreq_util::{Emulation, EmulationOS, EmulationOption};
 
-use crate::engine::scrapers::{Engine, EngineResponse, SearchQuery};
+use crate::{
+    engine::scrapers::{Engine, EngineResponse, SearchQuery},
+    url::FRAGMENT,
+};
 
 pub struct DuckDuckGoSearch;
 
 #[async_trait]
 impl Engine for DuckDuckGoSearch {
     async fn search(&self, query: SearchQuery) -> anyhow::Result<Vec<EngineResponse>> {
-        let encoded = urlencoding::encode(&query.query);
+        let encoded = utf8_percent_encode(&query.query, FRAGMENT);
         let url = format!("https://html.duckduckgo.com/html/?q={}", encoded);
 
         let client = wreq::Client::builder()
