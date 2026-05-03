@@ -34,7 +34,8 @@ impl AnswerEngine for DictionaryAnswer {
             caps.get(1).map(|m| m.as_str())
         } else {
             None
-        }?;
+        }?
+        .trim();
 
         let client = wreq::Client::builder()
             .emulation(
