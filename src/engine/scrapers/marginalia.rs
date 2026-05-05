@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use percent_encoding::utf8_percent_encode;
+use rand::RngExt;
 use scraper::{Html, Selector};
 use wreq_util::{Emulation, EmulationOS, EmulationOption};
 
@@ -36,7 +37,8 @@ impl Engine for MarginaliaSearch {
             println!("bot checked");
             // TODO: unwrap
             let new_url = extract_retry_url(&html).unwrap();
-            tokio::time::sleep(Duration::from_millis(1200)).await;
+            let delay = rand::rng().random_range(200..300);
+            tokio::time::sleep(Duration::from_millis(delay)).await;
             html = client.get(&new_url).send().await?.text().await?;
         }
 

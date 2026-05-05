@@ -36,7 +36,7 @@ impl Engine for DuckDuckGoSearch {
 fn parse_results(html: &str) -> Vec<EngineResponse> {
     let document = Html::parse_document(html);
 
-    let result_sel = Selector::parse(".result__body").unwrap();
+    let result_sel = Selector::parse(".result__body:not(:has(.badge--ad))").unwrap();
     let title_sel = Selector::parse(".result__title a").unwrap();
     let url_sel = Selector::parse(".result__url").unwrap();
     let desc_sel = Selector::parse(".result__snippet").unwrap();
