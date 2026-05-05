@@ -14,7 +14,7 @@ use crate::engine::{
     MetaSearcher,
     answers::{
         AnswerEngineMetadata, dictionary::DictionaryAnswer, ip::IpAnswer,
-        lorem_ipsum::LoremIpsumAnswer,
+        lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer,
     },
     scrapers::{
         EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
@@ -79,6 +79,7 @@ fn get_config() -> MetaSearcher {
         Box::new(DictionaryAnswer),
         AnswerEngineMetadata::new("wiktionary"),
     );
+    searcher.add_answer_engine(Box::new(NumbatAnswer), AnswerEngineMetadata::new("numbat"));
 
     searcher
 }

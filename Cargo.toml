@@ -11,6 +11,7 @@ axum = "0.8.9"
 futures = "0.3.32"
 maud = { version = "0.27.0", features = ["axum"] }
 mime_guess = "2.0.5"
+numbat = "1.23.0"
 percent-encoding = "2.3.2"
 regex = "1.12.3"
 rust-embed = { version = "8.11.0", features = ["axum-ex"] }

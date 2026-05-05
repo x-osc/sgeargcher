@@ -5,6 +5,7 @@ use crate::engine::scrapers::SearchContext;
 pub mod dictionary;
 pub mod ip;
 pub mod lorem_ipsum;
+pub mod numbat;
 
 #[async_trait]
 pub trait AnswerEngine: Send + Sync {

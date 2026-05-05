@@ -12,6 +12,10 @@
 
     --link: #8ea4a2;
     --link-visited: #938aa9;
+
+    --syntax-string: #87a987;
+    --syntax-constant: #8ba4b0;
+    --syntax-func: #c4746e;
 }
 
 ::selection {
@@ -52,6 +56,7 @@ body {
     min-height: 100%;
     margin-left: calc((70rem - 45rem) / 2);
 }
+
 @media screen and (max-width: 70rem) {
     .search-page main {
         margin: 0 auto;
@@ -66,6 +71,7 @@ input {
     font-size: inherit;
     padding: 0.25rem;
 }
+
 input:focus-visible {
     outline: none;
     border-color: var(--accent);
@@ -81,12 +87,15 @@ input:focus-visible {
     display: flex;
     gap: 0.5rem;
 }
+
 .search-input {
     flex: 1;
 }
+
 .search-submit {
     cursor: pointer;
 }
+
 .search-submit:active {
     border-color: var(--accent);
 }
@@ -99,6 +108,7 @@ a {
     color: var(--link);
     text-decoration: none;
 }
+
 a:visited {
     color: var(--link-visited);
 }
@@ -137,16 +147,16 @@ a:visited {
     margin-bottom: 0.5rem;
 }
 
-.answer p {
+:where(.answer) p {
     color: var(--fg-1);
     margin: 0.2rem 0;
 }
 
-p.grey {
-    color: var(--fg-2);
+.answer-query {
+    opacity: 0.65;
 }
 
-.ip {
+.answer-result {
     font-size: 1.17rem;
     font-weight: bold;
     color: var(--fg-1);
@@ -165,4 +175,15 @@ p.grey {
 .dictionary-example {
     margin-top: 0.8rem;
     margin-bottom: 0.8rem;
+}
+
+.calc-constant {
+    color: var(--syntax-constant);
+    white-space: pre-wrap;
+}
+.calc-string {
+    color: var(--syntax-string);
+}
+.calc-func {
+    color: var(--syntax-func);
 }
