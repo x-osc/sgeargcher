@@ -13,6 +13,8 @@ use crate::{
 };
 
 const BROWSER: &[(Emulation, f64)] = &[
+    (Emulation::Firefox136, 0.08),
+    (Emulation::Firefox139, 0.05),
     (Emulation::Chrome100, 0.1),
     (Emulation::Chrome101, 0.1),
     (Emulation::Chrome104, 0.1),
@@ -30,12 +32,27 @@ const BROWSER: &[(Emulation, f64)] = &[
     (Emulation::Chrome123, 0.03),
 ];
 
-const OS: &[(EmulationOS, f64)] = &[
-    (EmulationOS::Android, 0.5),
-    (EmulationOS::IOS, 0.6),
-    (EmulationOS::Windows, 0.1),
-    (EmulationOS::MacOS, 0.1),
+const BROWSER_MOBILE: &[(Emulation, f64)] = &[
+    (Emulation::FirefoxAndroid135, 0.1),
+    (Emulation::Chrome100, 0.1),
+    (Emulation::Chrome101, 0.1),
+    (Emulation::Chrome104, 0.1),
+    (Emulation::Chrome105, 0.1),
+    (Emulation::Chrome106, 0.1),
+    (Emulation::Chrome107, 0.1),
+    (Emulation::Chrome108, 0.1),
+    (Emulation::Chrome110, 0.1),
+    (Emulation::Chrome114, 0.1),
+    (Emulation::Chrome116, 0.1),
+    (Emulation::Chrome117, 0.1),
+    (Emulation::Chrome118, 0.1),
+    (Emulation::Chrome119, 0.08),
+    (Emulation::Chrome120, 0.05),
+    (Emulation::Chrome123, 0.03),
 ];
+
+const OS: &[(EmulationOS, f64)] = &[(EmulationOS::Windows, 0.1), (EmulationOS::MacOS, 0.1)];
+const OS_MOBILE: &[(EmulationOS, f64)] = &[(EmulationOS::Android, 0.5), (EmulationOS::IOS, 0.6)];
 
 // yahoo japan is pretty much just google results
 pub struct YahooJapanSearch;
@@ -49,19 +66,26 @@ impl Engine for YahooJapanSearch {
             encoded
         );
 
-        let opt_result: anyhow::Result<(Emulation, EmulationOS)> = {
+        let opt_browser_os: anyhow::Result<(&Emulation, &EmulationOS)> = {
             let mut rng = rand::rng();
-            let browser = choose_weighted(BROWSER, &mut rng)?.to_owned();
-            let os = choose_weighted(OS, &mut rng)?.to_owned();
-            Ok((browser, os))
+            let browser = choose_weighted(BROWSER, &mut rng)?;
+            let browser_mobile = choose_weighted(BROWSER_MOBILE, &mut rng)?;
+            let os = choose_weighted(OS, &mut rng)?;
+            let os_mobile = choose_weighted(OS_MOBILE, &mut rng)?;
+            let result = choose_weighted(
+                &[((browser, os), 0.1), ((browser_mobile, os_mobile), 0.5)],
+                &mut rng,
+            )?
+            .to_owned();
+            Ok(result)
         };
-        let (browser, os) = opt_result?;
+        let (browser, os) = opt_browser_os?;
 
         let client = wreq::Client::builder()
             .emulation(
                 EmulationOption::builder()
-                    .emulation(browser)
-                    .emulation_os(os)
+                    .emulation(*browser)
+                    .emulation_os(*os)
                     .build(),
             )
             .build()?;
