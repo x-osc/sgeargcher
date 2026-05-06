@@ -30,6 +30,15 @@ pub async fn get(
                 .get("x-forwarded-for")
                 .map(|ip| ip.to_str().unwrap_or("").to_owned())
                 .unwrap_or_else(|| addr.ip().to_string()),
+            headers: headers
+                .into_iter()
+                .map(|(k, v)| {
+                    (
+                        k.map(|k| k.to_string()).unwrap_or_default(),
+                        v.to_str().unwrap_or_default().to_string(),
+                    )
+                })
+                .collect(),
         },
     )
     .await;

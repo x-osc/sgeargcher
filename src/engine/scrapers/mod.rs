@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 
 pub mod brave;
@@ -22,6 +24,7 @@ pub trait Engine: Send + Sync {
 pub struct SearchContext {
     pub query: String,
     pub ip: String,
+    pub headers: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone)]

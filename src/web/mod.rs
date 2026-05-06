@@ -13,8 +13,8 @@ use rust_embed::RustEmbed;
 use crate::engine::{
     MetaSearcher,
     answers::{
-        AnswerEngineMetadata, dictionary::DictionaryAnswer, ip::IpAnswer,
-        lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer,
+        AnswerEngineMetadata, dictionary::DictionaryAnswer, headers::HeadersAnswer, ip::IpAnswer,
+        lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer, user_agent::UserAgentAnswer,
     },
     scrapers::{
         EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
@@ -80,6 +80,14 @@ fn get_config() -> MetaSearcher {
         AnswerEngineMetadata::new("wiktionary"),
     );
     searcher.add_answer_engine(Box::new(NumbatAnswer), AnswerEngineMetadata::new("numbat"));
+    searcher.add_answer_engine(
+        Box::new(UserAgentAnswer),
+        AnswerEngineMetadata::new("user agent"),
+    );
+    searcher.add_answer_engine(
+        Box::new(HeadersAnswer),
+        AnswerEngineMetadata::new("headers"),
+    );
 
     searcher
 }

@@ -21,7 +21,7 @@ impl AnswerEngine for IpAnswer {
 
         Some(
             html! {
-                p.answer-query { "your ip is:" }
+                p.answer-query { "your ip is" }
                 p.answer-result.ip { (ip) }
             }
             .into_string(),

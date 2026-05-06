@@ -3,9 +3,11 @@ use async_trait::async_trait;
 use crate::engine::scrapers::SearchContext;
 
 pub mod dictionary;
+pub mod headers;
 pub mod ip;
 pub mod lorem_ipsum;
 pub mod numbat;
+pub mod user_agent;
 
 #[async_trait]
 pub trait AnswerEngine: Send + Sync {

@@ -187,3 +187,10 @@ a:visited {
 .calc-func {
     color: var(--syntax-func);
 }
+
+.headers-title {
+    font-size: 1.05em;
+}
+.header {
+    font-weight: bold;
+}
