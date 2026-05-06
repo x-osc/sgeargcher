@@ -7,6 +7,7 @@ pub mod duckduckgo;
 pub mod marginalia;
 pub mod mojeek;
 pub mod wiby;
+pub mod yahoo_japan;
 
 #[derive(Debug)]
 pub struct EngineResponse {

@@ -1,3 +1,8 @@
+use rand::{
+    Rng,
+    distr::{Distribution, weighted::WeightedIndex},
+};
+
 pub mod url;
 
 #[macro_export]
@@ -24,4 +29,9 @@ pub fn to_title_case(text: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+pub fn choose_weighted<'a, T>(items: &'a [(T, f64)], rng: &mut impl Rng) -> anyhow::Result<&'a T> {
+    let dist = WeightedIndex::new(items.iter().map(|(_, w)| *w))?;
+    Ok(&items[dist.sample(rng)].0)
 }

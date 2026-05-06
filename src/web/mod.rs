@@ -19,6 +19,7 @@ use crate::engine::{
     scrapers::{
         EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
         marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
+        yahoo_japan::YahooJapanSearch,
     },
 };
 
@@ -51,11 +52,11 @@ fn get_config() -> MetaSearcher {
     let mut searcher = MetaSearcher::new();
     searcher.add_engine(
         Box::new(DuckDuckGoSearch),
-        EngineMetadata::new("duckduckgo").weight(1.0),
+        EngineMetadata::new("duckduckgo").weight(0.9),
     );
     searcher.add_engine(
         Box::new(MarginaliaSearch),
-        EngineMetadata::new("marginalia").weight(0.6),
+        EngineMetadata::new("marginalia").weight(0.7),
     );
     searcher.add_engine(
         Box::new(BraveSearch),
@@ -67,7 +68,11 @@ fn get_config() -> MetaSearcher {
     );
     searcher.add_engine(
         Box::new(MojeekSearch),
-        EngineMetadata::new("mojeek").weight(0.5),
+        EngineMetadata::new("mojeek").weight(0.42),
+    );
+    searcher.add_engine(
+        Box::new(YahooJapanSearch),
+        EngineMetadata::new("yahoo_japan").weight(1.1),
     );
 
     searcher.add_answer_engine(Box::new(IpAnswer), AnswerEngineMetadata::new("ip"));
