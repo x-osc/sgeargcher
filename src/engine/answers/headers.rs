@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
-use maud::html;
+use maud::{Markup, html};
 
 use crate::{
     engine::{answers::AnswerEngine, scrapers::SearchContext},
@@ -21,13 +23,19 @@ impl AnswerEngine for HeadersAnswer {
 
         let html = html! {
             p.answer-query { "your headers are" }
-            @for (header, value) in search.headers.iter() {
-                div {
-                    span.header { (header) } ": " span.header-value { (value) }
-                }
-            }
+            (headers_html(&search.headers))
         };
 
         Some(html.into_string())
+    }
+}
+
+pub fn headers_html(headers: &HashMap<String, String>) -> Markup {
+    html! {
+        @for (header, value) in headers.iter() {
+            div {
+                span.header { (header) } ": " span.header-value { (value) }
+            }
+        }
     }
 }

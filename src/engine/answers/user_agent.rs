@@ -2,7 +2,10 @@ use async_trait::async_trait;
 use maud::html;
 
 use crate::{
-    engine::{answers::AnswerEngine, scrapers::SearchContext},
+    engine::{
+        answers::{AnswerEngine, headers::headers_html},
+        scrapers::SearchContext,
+    },
     regex,
 };
 
@@ -22,11 +25,7 @@ impl AnswerEngine for UserAgentAnswer {
         let all_headers_html = html! {
             details {
                 summary.headers-title { "all headers" }
-                @for (header, value) in search.headers.iter() {
-                    div {
-                        span.header { (header) } ": " span.header-value { (value) }
-                    }
-                }
+                (headers_html(&search.headers))
             }
         };
 
