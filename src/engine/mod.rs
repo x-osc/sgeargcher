@@ -96,7 +96,7 @@ impl MetaSearcher {
             let q = query.clone();
             async move {
                 let result =
-                    tokio::time::timeout(Duration::from_secs(5), engine_entry.engine.query(q))
+                    tokio::time::timeout(Duration::from_millis(3000), engine_entry.engine.query(q))
                         .await
                         .context("Search timed out")
                         .and_then(|res| res.map_err(anyhow::Error::from));
