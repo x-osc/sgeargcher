@@ -40,7 +40,19 @@ pub fn merge_and_rank_responses(
                 hash_map::Entry::Occupied(mut entry) => {
                     let existing = entry.get_mut();
                     existing.score += result_score;
-                    existing.engines.push(engine_name.clone());
+
+                    // for some reason
+                    // somehow
+                    // mojeek returns both
+                    // "https://play.google.com/store/apps/details?id=com.brave.browser&hl=en_US" and
+                    // "https://play.google.com/store/apps/details?id=com.brave.browser&hl=en"
+                    // for the query "brave browser"
+                    // and the url param gets normalized out
+                    // so mojeek is placed in engines twice
+                    // so we make sure that doesnt happen
+                    if !existing.engines.contains(&engine_name) {
+                        existing.engines.push(engine_name.clone());
+                    }
 
                     if engine_weight > existing.highest_engine_weight {
                         existing.title = engine_response.title;
