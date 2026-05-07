@@ -93,6 +93,7 @@ pub static DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| Search
         CustomRank::domain("alternativeto.net", 0.7),
         CustomRank::domain("play.google.com", 0.35),
         CustomRank::domain("apps.apple.com", 0.35),
+        CustomRank::domain("apps.microsoft.com", 0.35),
         CustomRank::domain("wikihow.com", 1.0),
     ]
     .into(),
