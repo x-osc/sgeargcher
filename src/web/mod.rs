@@ -49,7 +49,7 @@ pub async fn run() {
     .unwrap();
 }
 
-pub const DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| SearchConfig {
+pub static DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| SearchConfig {
     engine_settings: [
         ("duckduckgo".into(), EngineSetting::new().weight(0.9)),
         ("marginalia".into(), EngineSetting::new().weight(0.7)),
@@ -62,7 +62,7 @@ pub const DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| SearchC
     domain_weights: HashMap::new(),
 });
 
-pub const METASEARCHER: LazyLock<MetaSearcher> = LazyLock::new(|| {
+pub static METASEARCHER: LazyLock<MetaSearcher> = LazyLock::new(|| {
     let mut searcher = MetaSearcher::new();
     searcher.add_engine(
         Box::new(DuckDuckGoSearch),
