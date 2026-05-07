@@ -44,6 +44,14 @@ pub fn normalize_url(url: &str) -> String {
                 let path = url.path().to_lowercase();
                 url.set_path(&path);
             }
+            "play.google.com" => {
+                let new_query_pairs: Vec<_> = url
+                    .query_pairs()
+                    .filter(|(k, _)| k != "hl")
+                    .map(|(k, v)| (k.into_owned(), v.into_owned()))
+                    .collect();
+                set_query_pairs(&mut url, new_query_pairs);
+            }
             "github.com" => {
                 let segments: Vec<_> = url
                     .path_segments()
@@ -74,8 +82,14 @@ pub fn normalize_url(url: &str) -> String {
     let new_query_pairs: Vec<_> = url
         .query_pairs()
         .filter(|(k, _)| !TRACKING_PARAMS.contains(&k.as_ref()))
+        .map(|(k, v)| (k.into_owned(), v.into_owned()))
         .collect();
+    set_query_pairs(&mut url, new_query_pairs);
 
+    url.to_string()
+}
+
+fn set_query_pairs(url: &mut Url, new_query_pairs: Vec<(String, String)>) {
     if new_query_pairs.is_empty() {
         url.set_query(None);
     } else {
@@ -85,6 +99,4 @@ pub fn normalize_url(url: &str) -> String {
                 .finish(),
         ));
     }
-
-    url.to_string()
 }
