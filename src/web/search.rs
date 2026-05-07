@@ -8,8 +8,8 @@ use axum::{
 use maud::{DOCTYPE, Markup, html};
 
 use crate::{
-    engine::{SearchResult, run_search, scrapers::SearchContext},
-    web::{get_config, html_head},
+    engine::{SearchResult, scrapers::SearchContext},
+    web::{DEFAULT_USER_CONFIG, METASEARCHER, html_head},
 };
 
 pub async fn get(
@@ -22,26 +22,29 @@ pub async fn get(
         return Redirect::to("/").into_response();
     }
 
-    let response = run_search(
-        get_config(),
-        SearchContext {
-            query: query.to_owned(),
-            ip: headers
-                .get("x-forwarded-for")
-                .map(|ip| ip.to_str().unwrap_or("").to_owned())
-                .unwrap_or_else(|| addr.ip().to_string()),
-            headers: headers
-                .into_iter()
-                .map(|(k, v)| {
-                    (
-                        k.map(|k| k.to_string()).unwrap_or_default(),
-                        v.to_str().unwrap_or_default().to_string(),
-                    )
-                })
-                .collect(),
-        },
-    )
-    .await;
+    let config = DEFAULT_USER_CONFIG.merge_into_default(&METASEARCHER);
+
+    let response = METASEARCHER
+        .run_search(
+            SearchContext {
+                query: query.to_owned(),
+                ip: headers
+                    .get("x-forwarded-for")
+                    .map(|ip| ip.to_str().unwrap_or("").to_owned())
+                    .unwrap_or_else(|| addr.ip().to_string()),
+                headers: headers
+                    .into_iter()
+                    .map(|(k, v)| {
+                        (
+                            k.map(|k| k.to_string()).unwrap_or_default(),
+                            v.to_str().unwrap_or_default().to_string(),
+                        )
+                    })
+                    .collect(),
+            },
+            &config,
+        )
+        .await;
 
     html! {
         (DOCTYPE)

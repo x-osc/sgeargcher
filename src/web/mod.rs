@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{collections::HashMap, net::SocketAddr, sync::LazyLock};
 
 use axum::{
     Router,
@@ -16,6 +16,7 @@ use crate::engine::{
         AnswerEngineMetadata, dictionary::DictionaryAnswer, headers::HeadersAnswer, ip::IpAnswer,
         lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer, user_agent::UserAgentAnswer,
     },
+    config::{EngineSetting, SearchConfig},
     scrapers::{
         EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
         marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
@@ -48,31 +49,35 @@ pub async fn run() {
     .unwrap();
 }
 
-fn get_config() -> MetaSearcher {
+pub const DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| SearchConfig {
+    engine_settings: [
+        ("duckduckgo".into(), EngineSetting::new().weight(0.9)),
+        ("marginalia".into(), EngineSetting::new().weight(0.7)),
+        ("brave".into(), EngineSetting::new().weight(0.6)),
+        ("yahoo_japan".into(), EngineSetting::new().weight(1.1)),
+        ("wiby".into(), EngineSetting::new().weight(0.15)),
+        ("mojeek".into(), EngineSetting::new().weight(0.4)),
+    ]
+    .into(),
+    domain_weights: HashMap::new(),
+});
+
+pub const METASEARCHER: LazyLock<MetaSearcher> = LazyLock::new(|| {
     let mut searcher = MetaSearcher::new();
     searcher.add_engine(
         Box::new(DuckDuckGoSearch),
-        EngineMetadata::new("duckduckgo").weight(0.9),
+        EngineMetadata::new("duckduckgo"),
     );
     searcher.add_engine(
         Box::new(MarginaliaSearch),
-        EngineMetadata::new("marginalia").weight(0.7),
+        EngineMetadata::new("marginalia"),
     );
-    searcher.add_engine(
-        Box::new(BraveSearch),
-        EngineMetadata::new("brave").weight(0.8),
-    );
-    searcher.add_engine(
-        Box::new(WibySearch),
-        EngineMetadata::new("wiby").weight(0.15),
-    );
-    searcher.add_engine(
-        Box::new(MojeekSearch),
-        EngineMetadata::new("mojeek").weight(0.42),
-    );
+    searcher.add_engine(Box::new(BraveSearch), EngineMetadata::new("brave"));
+    searcher.add_engine(Box::new(WibySearch), EngineMetadata::new("wiby"));
+    searcher.add_engine(Box::new(MojeekSearch), EngineMetadata::new("mojeek"));
     searcher.add_engine(
         Box::new(YahooJapanSearch),
-        EngineMetadata::new("yahoo_japan").weight(1.1),
+        EngineMetadata::new("yahoo_japan"),
     );
 
     searcher.add_answer_engine(Box::new(IpAnswer), AnswerEngineMetadata::new("ip"));
@@ -95,7 +100,7 @@ fn get_config() -> MetaSearcher {
     );
 
     searcher
-}
+});
 
 async fn static_handler(Path(path): Path<String>) -> impl IntoResponse {
     StaticFile(path)

@@ -9,7 +9,7 @@ pub mod mojeek;
 pub mod wiby;
 pub mod yahoo_japan;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EngineResponse {
     pub title: String,
     pub url: String,
@@ -31,7 +31,6 @@ pub struct SearchContext {
 #[derive(Debug, Clone)]
 pub struct EngineMetadata {
     pub name: String,
-    pub weight: f64,
 }
 
 impl EngineMetadata {
@@ -41,18 +40,12 @@ impl EngineMetadata {
             ..Default::default()
         }
     }
-
-    pub fn weight(mut self, weight: f64) -> Self {
-        self.weight = weight;
-        self
-    }
 }
 
 impl Default for EngineMetadata {
     fn default() -> Self {
         Self {
             name: "unknown".to_string(),
-            weight: 1.0,
         }
     }
 }

@@ -7,38 +7,19 @@ use tokio::time::timeout;
 
 use crate::engine::{
     answers::{AnswerEngine, AnswerEngineEntry, AnswerEngineMetadata},
+    config::SearchConfig,
     ranking::merge_and_rank_responses,
     scrapers::{Engine, EngineEntry, EngineMetadata, EngineResponse, SearchContext},
 };
 
 pub mod answers;
+pub mod config;
 pub mod ranking;
 pub mod scrapers;
 
 pub struct MetaSearchResult {
     pub answer: Option<AnswerResult>,
     pub results: Vec<SearchResult>,
-}
-
-pub async fn run_search(searcher: MetaSearcher, query: SearchContext) -> MetaSearchResult {
-    let (responses, answer) = tokio::join!(
-        searcher.get_all_responses(query.clone()),
-        searcher.get_answer(query)
-    );
-
-    let responses: Vec<_> = responses
-        .into_iter()
-        .filter_map(|(id, r)| match r {
-            Ok(r) => Some((searcher.get_metadata(&id).unwrap().clone(), r)),
-            Err(e) => {
-                println!("{}", e);
-                None
-            }
-        })
-        .collect();
-    let results = merge_and_rank_responses(responses);
-
-    MetaSearchResult { answer, results }
 }
 
 #[derive(Debug)]
@@ -58,25 +39,20 @@ pub struct AnswerResult {
 }
 
 pub struct MetaSearcher {
-    engines: HashMap<String, EngineEntry>,
+    engines: Vec<EngineEntry>,
     answer_engines: Vec<AnswerEngineEntry>,
 }
 
 impl MetaSearcher {
     pub fn new() -> Self {
         Self {
-            engines: HashMap::new(),
+            engines: Vec::new(),
             answer_engines: Vec::new(),
         }
     }
 
     pub fn add_engine(&mut self, engine: Box<dyn Engine>, metadata: EngineMetadata) {
-        self.engines
-            .insert(metadata.name.clone(), EngineEntry { engine, metadata });
-    }
-
-    pub fn get_metadata(&self, engine_id: &str) -> Option<&EngineMetadata> {
-        self.engines.get(engine_id).map(|e| &e.metadata)
+        self.engines.push(EngineEntry { engine, metadata });
     }
 
     pub fn add_answer_engine(
@@ -88,11 +64,49 @@ impl MetaSearcher {
             .push(AnswerEngineEntry { engine, metadata });
     }
 
+    pub async fn run_search(
+        &self,
+        query: SearchContext,
+        config: &SearchConfig,
+    ) -> MetaSearchResult {
+        let (responses, answer) = tokio::join!(
+            self.get_all_responses(query.clone(), config),
+            self.get_answer(query)
+        );
+
+        let responses: Vec<_> = responses
+            .into_iter()
+            .filter_map(|(id, r)| match r {
+                Ok(r) => Some((id, r)),
+                Err(e) => {
+                    println!("{}", e);
+                    None
+                }
+            })
+            .collect();
+        let results = merge_and_rank_responses(responses, config);
+
+        MetaSearchResult { answer, results }
+    }
+
     pub async fn get_all_responses(
         &self,
         query: SearchContext,
+        config: &SearchConfig,
     ) -> HashMap<String, anyhow::Result<Vec<EngineResponse>>> {
-        let futures = self.engines.iter().map(|(id, engine_entry)| {
+        let engines: Vec<_> = self
+            .engines
+            .iter()
+            .filter(|engine_entry| {
+                let Some(settings) = config.engine_settings.get(&engine_entry.metadata.name) else {
+                    return false;
+                };
+
+                settings.enabled && settings.weight > 0.
+            })
+            .collect();
+
+        let futures = engines.iter().map(|engine_entry| {
             let q = query.clone();
             async move {
                 let result =
@@ -101,7 +115,7 @@ impl MetaSearcher {
                         .context("Search timed out")
                         .and_then(|res| res.map_err(anyhow::Error::from));
 
-                (id.clone(), result)
+                (engine_entry.metadata.name.clone(), result)
             }
         });
 

@@ -9,6 +9,7 @@ anyhow = "1.0.102"
 async-trait = "0.1.89"
 axum = "0.8.9"
 futures = "0.3.32"
+itertools = "0.14.0"
 maud = { version = "0.27.0", features = ["axum"] }
 mime_guess = "2.0.5"
 numbat = "1.23.0"

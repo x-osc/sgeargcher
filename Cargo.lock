@@ -2600,6 +2600,7 @@ dependencies = [
  "async-trait",
  "axum",
  "futures",
+ "itertools 0.14.0",
  "maud",
  "mime_guess",
  "numbat",

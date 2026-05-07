@@ -1,26 +1,28 @@
 use std::collections::{HashMap, hash_map};
 
 use crate::{
-    engine::{EngineMetadata, SearchResult, scrapers::EngineResponse},
+    engine::{SearchResult, config::SearchConfig, scrapers::EngineResponse},
     utils::url::normalize_url,
 };
 
 pub fn merge_and_rank_responses(
-    responses: Vec<(EngineMetadata, Vec<EngineResponse>)>,
+    responses: Vec<(String, Vec<EngineResponse>)>,
+    config: &SearchConfig,
 ) -> Vec<SearchResult> {
     // url to result
     let mut final_results: HashMap<String, SearchResult> = HashMap::new();
 
-    let engine_weights: HashMap<String, f64> = responses
-        .iter()
-        .map(|(engine, _)| (engine.name.clone(), engine.weight))
-        .collect();
+    for (engine_name, results) in responses.clone() {
+        let engine_weight = config
+            .engine_settings
+            .get(&engine_name)
+            .map(|e| e.weight)
+            .unwrap_or(1.0);
 
-    for (engine, results) in responses {
         for (response_index, engine_response) in results.into_iter().enumerate() {
             // 2 is adjustable constant
             let base_result_score = 1. / (response_index as f64 + 2.);
-            let result_score = base_result_score * engine.weight;
+            let result_score = base_result_score * engine_weight;
 
             let url = normalize_url(&engine_response.url);
 
@@ -31,19 +33,19 @@ pub fn merge_and_rank_responses(
                         url: url,
                         description: engine_response.description,
                         score: result_score,
-                        engines: vec![engine.name.clone()],
-                        highest_engine_weight: engine.weight,
+                        engines: vec![engine_name.clone()],
+                        highest_engine_weight: engine_weight,
                     });
                 }
                 hash_map::Entry::Occupied(mut entry) => {
                     let existing = entry.get_mut();
                     existing.score += result_score;
-                    existing.engines.push(engine.name.clone());
+                    existing.engines.push(engine_name.clone());
 
-                    if engine.weight > existing.highest_engine_weight {
+                    if engine_weight > existing.highest_engine_weight {
                         existing.title = engine_response.title;
                         existing.description = engine_response.description;
-                        existing.highest_engine_weight = engine.weight;
+                        existing.highest_engine_weight = engine_weight;
                     }
                 }
             };
@@ -56,6 +58,20 @@ pub fn merge_and_rank_responses(
             .partial_cmp(&a.score)
             .unwrap_or(std::cmp::Ordering::Equal)
     });
+
+    let engine_weights: HashMap<String, f64> = responses
+        .iter()
+        .map(|(engine, _)| {
+            (
+                engine.to_owned(),
+                config
+                    .engine_settings
+                    .get(engine)
+                    .map(|e| e.weight)
+                    .unwrap_or(1.0),
+            )
+        })
+        .collect();
     // cant be bothered to do this properly
     results_vec.iter_mut().for_each(|r| {
         r.engines.sort_by(|a, b| {
