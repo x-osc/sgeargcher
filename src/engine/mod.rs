@@ -1,4 +1,7 @@
-use std::{collections::HashMap, time::Duration};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
 
 use anyhow::Context;
 use futures::{StreamExt, future::join_all, stream::FuturesUnordered};
@@ -69,6 +72,8 @@ impl MetaSearcher {
         query: SearchContext,
         config: &SearchConfig,
     ) -> MetaSearchResult {
+        println!(r#"searching for "{}""#, query.query);
+
         let (responses, answer) = tokio::join!(
             self.get_all_responses(query.clone(), config),
             self.get_answer(query)
@@ -109,11 +114,34 @@ impl MetaSearcher {
         let futures = engines.iter().map(|engine_entry| {
             let q = query.clone();
             async move {
+                let start = Instant::now();
+
                 let result =
-                    tokio::time::timeout(Duration::from_millis(3000), engine_entry.engine.query(q))
+                    tokio::time::timeout(Duration::from_millis(5000), engine_entry.engine.query(q))
                         .await
-                        .context("Search timed out")
-                        .and_then(|res| res.map_err(anyhow::Error::from));
+                        .with_context(|| format!("{} timed out", engine_entry.metadata.name))
+                        .flatten();
+
+                let elapsed = start.elapsed();
+
+                match &result {
+                    Ok(responses) => {
+                        println!(
+                            "{} completed in {}s, ({} results)",
+                            engine_entry.metadata.name,
+                            elapsed.as_secs_f64(),
+                            responses.len()
+                        )
+                    }
+                    Err(err) => {
+                        println!(
+                            "{} failed in {}s: {:?}",
+                            engine_entry.metadata.name,
+                            elapsed.as_secs_f64(),
+                            err
+                        )
+                    }
+                };
 
                 (engine_entry.metadata.name.clone(), result)
             }

@@ -88,6 +88,8 @@ impl Engine for YahooJapanSearch {
                     .emulation_os(*os)
                     .build(),
             )
+            // idk what this is for but 4get does it so
+            .http2_only()
             .build()?;
 
         let html = client.get(&url).send().await?.text().await?;
