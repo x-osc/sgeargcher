@@ -37,7 +37,7 @@ impl Engine for MarginaliaSearch {
             println!("bot checked");
             // TODO: unwrap
             let new_url = extract_retry_url(&html).unwrap();
-            let delay = rand::rng().random_range(200..300);
+            let delay = rand::rng().random_range(400..700);
             tokio::time::sleep(Duration::from_millis(delay)).await;
             html = client.get(&new_url).send().await?.text().await?;
         }
