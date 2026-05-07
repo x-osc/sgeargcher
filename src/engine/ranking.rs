@@ -1,7 +1,13 @@
 use std::collections::{HashMap, hash_map};
 
+use url::Url;
+
 use crate::{
-    engine::{SearchResult, config::SearchConfig, scrapers::EngineResponse},
+    engine::{
+        SearchResult,
+        config::{CustomRankSelector, SearchConfig},
+        scrapers::EngineResponse,
+    },
     utils::url::normalize_url,
 };
 
@@ -64,7 +70,35 @@ pub fn merge_and_rank_responses(
         }
     }
 
-    let mut results_vec: Vec<_> = final_results.into_values().collect();
+    let mut results_vec: Vec<SearchResult> = final_results
+        .into_iter()
+        .filter_map(|(_k, result)| {
+            let Ok(parsed_url) = Url::parse(&result.url) else {
+                return Some(result);
+            };
+            let domain = parsed_url.domain().unwrap_or(&result.url);
+
+            // rev so that lower settings are higher priority
+            let Some(custom_rank_settings) =
+                config.custom_rank.iter().rev().find(|r| match &r.selector {
+                    CustomRankSelector::Domain(selector) => domain.contains(selector),
+                    CustomRankSelector::Regex(regex) => regex.is_match(domain),
+                })
+            else {
+                return Some(result);
+            };
+
+            if custom_rank_settings.blocked || !(custom_rank_settings.weight > 0.) {
+                return None;
+            }
+
+            let mut result = result;
+            result.score *= custom_rank_settings.weight;
+
+            Some(result)
+        })
+        .collect();
+
     results_vec.sort_by(|a, b| {
         b.score
             .partial_cmp(&a.score)

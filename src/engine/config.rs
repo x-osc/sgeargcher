@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use regex::Regex;
 use std::collections::HashMap;
 
 use crate::engine::MetaSearcher;
@@ -6,7 +7,7 @@ use crate::engine::MetaSearcher;
 #[derive(Debug, Clone)]
 pub struct SearchConfig {
     pub engine_settings: HashMap<String, EngineSetting>,
-    pub domain_weights: HashMap<String, f64>,
+    pub custom_rank: Vec<CustomRank>,
 }
 
 impl SearchConfig {
@@ -17,7 +18,7 @@ impl SearchConfig {
                 .iter()
                 .map(|e| (e.metadata.name.clone(), EngineSetting::default()))
                 .collect(),
-            domain_weights: HashMap::new(),
+            custom_rank: Vec::new(),
         }
     }
 
@@ -80,4 +81,28 @@ impl Default for EngineSetting {
             enabled: true,
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct CustomRank {
+    pub selector: CustomRankSelector,
+    pub weight: f64,
+    pub blocked: bool,
+}
+
+impl CustomRank {
+    pub fn domain(domain: &str, weight: f64) -> Self {
+        Self {
+            selector: CustomRankSelector::Domain(domain.into()),
+            weight,
+            blocked: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum CustomRankSelector {
+    #[expect(dead_code)]
+    Regex(Regex),
+    Domain(String),
 }
