@@ -87,6 +87,7 @@ pub static DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| Search
         CustomRank::domain("docs.rs", 1.4),
         CustomRank::domain("css-tricks.com", 1.2),
         CustomRank::domain("minecraft.wiki", 1.25),
+        CustomRank::domain("modrinth.com", 1.15),
         //
         CustomRank::domain("quora.com", 0.7),
         CustomRank::domain("facebook.com", 0.7),
