@@ -1,9 +1,4 @@
-use std::{
-    env::current_dir,
-    fs::{self, create_dir},
-    path::PathBuf,
-    sync::OnceLock,
-};
+use std::{fs, path::PathBuf, sync::OnceLock};
 
 use clap::Parser;
 use serde::{Deserialize, Serialize};
@@ -32,8 +27,8 @@ fn get_config_or_create(dir: Option<&PathBuf>) -> anyhow::Result<MetaSearchConfi
     let dir = match dir {
         Some(dir) => dir,
         None => {
-            create_dir("config")?;
-            &current_dir()?.join("config")
+            fs::create_dir_all("config")?;
+            &std::env::current_dir()?.join("config")
         }
     };
 
