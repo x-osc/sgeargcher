@@ -45,6 +45,10 @@ pub fn normalize_url(url: &str) -> String {
                 url.set_path(&path);
             }
             "play.google.com" => {
+                // google has no hl param
+                // duckduckgo uses hl=en-US
+                // brave & mojeek uses hl=en_US
+                // ive also seen brave use hl=en_ZA ???
                 let new_query_pairs: Vec<_> = url
                     .query_pairs()
                     .filter(|(k, _)| k != "hl")
@@ -58,6 +62,7 @@ pub fn normalize_url(url: &str) -> String {
                     .map(|s| s.collect())
                     .unwrap_or_else(Vec::new);
 
+                // lowercase repo and owner only
                 if segments.len() >= 2 {
                     let owner = segments[0].to_lowercase();
                     let repo = segments[1].to_lowercase();
@@ -70,6 +75,24 @@ pub fn normalize_url(url: &str) -> String {
                     }
 
                     url.set_path(&new_path);
+                }
+            }
+            "docs.rs" => {
+                let segments: Vec<_> = url
+                    .path_segments()
+                    .map(|s| s.collect())
+                    .unwrap_or_else(Vec::new);
+
+                // rewrite /crate/latest/crate -> /crate_name
+                if segments.len() == 3 && segments[1] == "latest" && segments[0] == segments[2] {
+                    let new_path = format!("/{}", segments[0]);
+                    url.set_path(&new_path);
+                }
+
+                let path = url.path().to_string();
+                let stripped = path.strip_suffix("/index.html");
+                if let Some(stripped) = stripped {
+                    url.set_path(stripped);
                 }
             }
 
