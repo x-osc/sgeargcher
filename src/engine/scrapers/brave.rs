@@ -37,7 +37,7 @@ pub struct BraveSearch;
 impl Engine for BraveSearch {
     async fn query(&self, query: SearchContext) -> anyhow::Result<Vec<EngineResponse>> {
         let encoded = utf8_percent_encode(&query.query, FRAGMENT);
-        let url = format!("https://search.brave.com/search?q={}", encoded);
+        let url = format!("https://search.brave.com/search?q={}&spellcheck=0", encoded);
 
         let opt_browser_os: anyhow::Result<(&Emulation, &EmulationOS)> = {
             let mut rng = rand::rng();

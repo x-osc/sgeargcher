@@ -13,8 +13,6 @@ use crate::{
 };
 
 const BROWSER: &[(Emulation, f64)] = &[
-    (Emulation::Firefox136, 0.08),
-    (Emulation::Firefox139, 0.05),
     (Emulation::Chrome100, 0.1),
     (Emulation::Chrome101, 0.1),
     (Emulation::Chrome104, 0.1),
@@ -33,7 +31,6 @@ const BROWSER: &[(Emulation, f64)] = &[
 ];
 
 const BROWSER_MOBILE: &[(Emulation, f64)] = &[
-    (Emulation::FirefoxAndroid135, 0.1),
     (Emulation::Chrome100, 0.1),
     (Emulation::Chrome101, 0.1),
     (Emulation::Chrome104, 0.1),
@@ -62,7 +59,9 @@ impl Engine for YahooJapanSearch {
     async fn query(&self, query: SearchContext) -> anyhow::Result<Vec<EngineResponse>> {
         let encoded = utf8_percent_encode(&query.query, FRAGMENT);
         let url = format!(
-            "https://search.yahoo.co.jp/search?p={}&ei=UTF-8&fr=edgesc",
+            // fr: referrer; edgesc is chrome(ium) identifier
+            // qrw: dont do spell correction
+            "https://search.yahoo.co.jp/search?p={}&ei=UTF-8&fr=edgesc&qrw=0",
             encoded
         );
 
