@@ -10,17 +10,21 @@ use axum::{
 use maud::{DOCTYPE, Markup, html};
 use rust_embed::RustEmbed;
 
-use crate::engine::{
-    MetaSearcher,
-    answers::{
-        AnswerEngineMetadata, dictionary::DictionaryAnswer, headers::HeadersAnswer, ip::IpAnswer,
-        lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer, user_agent::UserAgentAnswer,
-    },
-    config::{CustomRank, EngineSetting, SearchConfig},
-    scrapers::{
-        EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
-        marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
-        yahoo_japan::YahooJapanSearch,
+use crate::{
+    MetaSearchConfig,
+    engine::{
+        MetaSearcher,
+        answers::{
+            AnswerEngineMetadata, dictionary::DictionaryAnswer, headers::HeadersAnswer,
+            ip::IpAnswer, lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer,
+            user_agent::UserAgentAnswer,
+        },
+        config::{CustomRank, EngineSetting, SearchConfig},
+        scrapers::{
+            EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
+            marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
+            yahoo_japan::YahooJapanSearch,
+        },
     },
 };
 
@@ -31,22 +35,26 @@ mod search;
 #[folder = "src/web/assets"]
 struct Assets;
 
-pub async fn run() {
+pub async fn run(config: MetaSearchConfig) -> anyhow::Result<()> {
     let app = Router::new()
         .route("/", get(index::get))
         .route("/search", get(search::get))
         .route("/assets/{*file}", get(static_handler))
         .fallback(get(not_found));
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
+    println!(
+        "starting webserver on {}:{}",
+        config.server.bind, config.server.port
+    );
+
+    let listener = tokio::net::TcpListener::bind((config.server.bind, config.server.port)).await?;
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
-    .await
-    .unwrap();
+    .await?;
+
+    Ok(())
 }
 
 pub static DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| SearchConfig {
