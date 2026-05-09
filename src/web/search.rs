@@ -1,26 +1,33 @@
-use std::{collections::HashMap, net::SocketAddr};
+use std::collections::HashMap;
 
-use axum::{
-    extract::{ConnectInfo, Query},
-    http::HeaderMap,
-    response::{IntoResponse, Redirect, Response},
-};
+use actix_web::{HttpRequest, HttpResponse, Responder, get, web};
 use maud::{DOCTYPE, Markup, html};
 
 use crate::{
     engine::{SearchResult, scrapers::SearchContext},
-    web::{DEFAULT_USER_CONFIG, METASEARCHER, html_head},
+    web::{METASEARCHER, config::DEFAULT_USER_CONFIG, html_head},
 };
 
-pub async fn get(
-    Query(params): Query<HashMap<String, String>>,
-    headers: HeaderMap,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-) -> Response {
+#[get("/search")]
+pub async fn get(params: web::Query<HashMap<String, String>>, req: HttpRequest) -> impl Responder {
     let query = params.get("q").map(|s| s.trim()).unwrap_or("");
     if query.is_empty() {
-        return Redirect::to("/").into_response();
+        return web::Redirect::to("/")
+            .see_other()
+            .respond_to(&req)
+            .map_into_boxed_body();
     }
+
+    let connection_info = req.connection_info();
+    let ip = connection_info
+        .realip_remote_addr()
+        .unwrap_or("unknown")
+        .to_string();
+    let headers: HashMap<_, _> = req
+        .headers()
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or_default().to_string()))
+        .collect();
 
     let config = DEFAULT_USER_CONFIG.merge_into_default(&METASEARCHER);
 
@@ -28,25 +35,14 @@ pub async fn get(
         .run_search(
             SearchContext {
                 query: query.to_owned(),
-                ip: headers
-                    .get("x-forwarded-for")
-                    .map(|ip| ip.to_str().unwrap_or("").to_owned())
-                    .unwrap_or_else(|| addr.ip().to_string()),
-                headers: headers
-                    .into_iter()
-                    .map(|(k, v)| {
-                        (
-                            k.map(|k| k.to_string()).unwrap_or_default(),
-                            v.to_str().unwrap_or_default().to_string(),
-                        )
-                    })
-                    .collect(),
+                ip,
+                headers,
             },
             &config,
         )
         .await;
 
-    html! {
+    let html = html! {
         (DOCTYPE)
         html {
             (html_head(&format!("{query} - sgeargcher")))
@@ -72,8 +68,9 @@ pub async fn get(
                 }
             }
         }
-    }
-    .into_response()
+    };
+
+    HttpResponse::Ok().body(html.into_string())
 }
 
 fn single_search_result(result: SearchResult) -> Markup {

@@ -1,8 +1,10 @@
-use maud::{DOCTYPE, Markup, html};
+use actix_web::{Responder, get};
+use maud::{DOCTYPE, html};
 
 use crate::web::html_head;
 
-pub async fn get() -> Markup {
+#[get("/")]
+pub async fn get() -> impl Responder {
     html! {
         (DOCTYPE)
         html {

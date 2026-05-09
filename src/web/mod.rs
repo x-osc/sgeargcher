@@ -1,12 +1,6 @@
-use std::{net::SocketAddr, sync::LazyLock};
+use std::sync::LazyLock;
 
-use axum::{
-    Router,
-    extract::Path,
-    http::{StatusCode, header},
-    response::{IntoResponse, Response},
-    routing::get,
-};
+use actix_web::{App, HttpResponse, HttpServer, Responder, get, web};
 use maud::{DOCTYPE, Markup, html};
 use rust_embed::RustEmbed;
 
@@ -19,7 +13,6 @@ use crate::{
             ip::IpAnswer, lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer,
             user_agent::UserAgentAnswer,
         },
-        config::{CustomRank, EngineSetting, SearchConfig},
         scrapers::{
             EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
             marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
@@ -28,6 +21,7 @@ use crate::{
     },
 };
 
+mod config;
 mod index;
 mod search;
 
@@ -36,79 +30,26 @@ mod search;
 struct Assets;
 
 pub async fn run(config: MetaSearchConfig) -> anyhow::Result<()> {
-    let app = Router::new()
-        .route("/", get(index::get))
-        .route("/search", get(search::get))
-        .route("/assets/{*file}", get(static_handler))
-        .fallback(get(not_found));
+    let server = HttpServer::new(move || {
+        App::new()
+            .service(index::get)
+            .service(search::get)
+            .service(static_handler)
+            .default_service(web::to(not_found))
+    });
 
     println!(
         "starting webserver on {}:{}",
         config.server.bind, config.server.port
     );
 
-    let listener = tokio::net::TcpListener::bind((config.server.bind, config.server.port)).await?;
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .await?;
+    server
+        .bind((config.server.bind, config.server.port))?
+        .run()
+        .await?;
 
     Ok(())
 }
-
-pub static DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| SearchConfig {
-    engine_settings: [
-        ("duckduckgo".into(), EngineSetting::new().weight(0.9)),
-        ("marginalia".into(), EngineSetting::new().weight(0.7)),
-        ("brave".into(), EngineSetting::new().weight(0.6)),
-        ("yahoo_japan".into(), EngineSetting::new().weight(1.1)),
-        ("wiby".into(), EngineSetting::new().weight(0.15)),
-        ("mojeek".into(), EngineSetting::new().weight(0.4)),
-    ]
-    .into(),
-
-    // ref https://kagi.com/stats?stat=insights&sub_ins=domains&k=-1
-    custom_rank: [
-        CustomRank::domain("wikipedia.org", 1.5),
-        CustomRank::domain("wiktionary.org", 1.2),
-        CustomRank::domain("github.com", 1.4),
-        CustomRank::domain("gitlab.com", 1.5),
-        CustomRank::domain("codeberg.org", 1.5),
-        CustomRank::domain("news.ycombinator.com", 1.2),
-        CustomRank::domain("reddit.com", 1.1),
-        CustomRank::domain("stackoverflow.com", 1.1),
-        CustomRank::domain("stackexchange.com", 1.1),
-        CustomRank::domain("superuser.com", 1.1),
-        CustomRank::domain("developer.mozilla.org", 1.4),
-        CustomRank::domain("wiki.archlinux.org", 1.5),
-        CustomRank::domain("doc.rust-lang.org", 1.5),
-        CustomRank::domain("users.rust-lang.org", 1.2),
-        CustomRank::domain("docs.rs", 1.4),
-        CustomRank::domain("css-tricks.com", 1.2),
-        CustomRank::domain("minecraft.wiki", 1.25),
-        CustomRank::domain("modrinth.com", 1.15),
-        //
-        CustomRank::domain("quora.com", 0.7),
-        CustomRank::domain("facebook.com", 0.7),
-        CustomRank::domain("medium.com", 0.7),
-        CustomRank::domain("dev.to", 0.8),
-        CustomRank::domain("linkedin.com", 0.6),
-        CustomRank::domain("fandom.com", 0.65),
-        CustomRank::domain("tiktok.com", 0.8),
-        CustomRank::domain("amazon.com", 0.8),
-        CustomRank::domain("pinterest.com", 0.6),
-        CustomRank::domain("w3schools.com", 0.7),
-        CustomRank::domain("geeksforgeeks.org", 0.7),
-        CustomRank::domain("freecodecamp.net", 0.9),
-        CustomRank::domain("alternativeto.net", 0.7),
-        CustomRank::domain("play.google.com", 0.35),
-        CustomRank::domain("apps.apple.com", 0.35),
-        CustomRank::domain("apps.microsoft.com", 0.35),
-        CustomRank::domain("wikihow.com", 1.0),
-    ]
-    .into(),
-});
 
 pub static METASEARCHER: LazyLock<MetaSearcher> = LazyLock::new(|| {
     let mut searcher = MetaSearcher::new();
@@ -150,27 +91,19 @@ pub static METASEARCHER: LazyLock<MetaSearcher> = LazyLock::new(|| {
     searcher
 });
 
-async fn static_handler(Path(path): Path<String>) -> impl IntoResponse {
-    StaticFile(path)
+#[get("/assets/{_:.*}")]
+async fn static_handler(path: web::Path<String>) -> impl Responder {
+    handle_embedded_file(path.as_str())
 }
 
-pub struct StaticFile<T>(pub T);
+fn handle_embedded_file(path: &str) -> Option<HttpResponse> {
+    Assets::get(path).map(|f| {
+        let mime = mime_guess::from_path(&path).first_or_octet_stream();
 
-impl<T> IntoResponse for StaticFile<T>
-where
-    T: Into<String>,
-{
-    fn into_response(self) -> Response {
-        let path = self.0.into();
-
-        match Assets::get(path.as_str()) {
-            Some(content) => {
-                let mime = mime_guess::from_path(path).first_or_octet_stream();
-                ([(header::CONTENT_TYPE, mime.as_ref())], content.data).into_response()
-            }
-            None => (StatusCode::NOT_FOUND, "404 Not Found").into_response(),
-        }
-    }
+        HttpResponse::Ok()
+            .content_type(mime.as_ref())
+            .body(f.data.into_owned())
+    })
 }
 
 fn html_head(title: &str) -> Markup {
@@ -184,8 +117,8 @@ fn html_head(title: &str) -> Markup {
     }
 }
 
-async fn not_found() -> Markup {
-    html! {
+async fn not_found() -> impl Responder {
+    let html = html! {
         (DOCTYPE)
         html {
             (html_head("404 not found"))
@@ -193,6 +126,7 @@ async fn not_found() -> Markup {
                  h1 { "page not found" }
             }
         }
+    };
 
-    }
+    HttpResponse::NotFound().body(html)
 }
