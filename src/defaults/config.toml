@@ -1,0 +1,7 @@
+# metasearcher config
+
+[server]
+# set to 0.0.0.0 to bind to all addresses on host
+bind = "127.0.0.1"
+# default port is 7367
+port = 7367

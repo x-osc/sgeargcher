@@ -11,7 +11,7 @@ use maud::{DOCTYPE, Markup, html};
 use rust_embed::RustEmbed;
 
 use crate::{
-    MetaSearchConfig,
+    config::MetaSearchConfig,
     engine::{
         MetaSearcher,
         answers::{

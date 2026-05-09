@@ -1,9 +1,11 @@
-use std::{fs, path::PathBuf, sync::OnceLock};
+use std::{path::PathBuf, sync::OnceLock};
 
 use clap::Parser;
-use serde::{Deserialize, Serialize};
 use shadow_rs::shadow;
 
+use crate::config::get_config_or_create;
+
+mod config;
 mod engine;
 mod utils;
 mod web;
@@ -21,55 +23,6 @@ async fn main() -> anyhow::Result<()> {
     web::run(config).await?;
 
     Ok(())
-}
-
-fn get_config_or_create(dir: Option<&PathBuf>) -> anyhow::Result<MetaSearchConfig> {
-    let dir = match dir {
-        Some(dir) => dir,
-        None => {
-            fs::create_dir_all("config")?;
-            &std::env::current_dir()?.join("config")
-        }
-    };
-
-    if !dir.exists() || !dir.is_dir() {
-        anyhow::bail!("directory {} does not exist", dir.display())
-    }
-
-    let config_path = dir.join("config.toml");
-
-    if !config_path.exists() {
-        let default = MetaSearchConfig::default();
-
-        fs::write(config_path, toml::to_string_pretty(&default).unwrap())?;
-
-        return Ok(default);
-    }
-
-    let contents = fs::read_to_string(config_path)?;
-    Ok(toml::from_str(&contents)?)
-}
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-#[serde(default)]
-struct MetaSearchConfig {
-    server: ServerConfig,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(default)]
-struct ServerConfig {
-    bind: String,
-    port: u16,
-}
-
-impl Default for ServerConfig {
-    fn default() -> Self {
-        Self {
-            bind: "127.0.0.1".into(),
-            port: 7367,
-        }
-    }
 }
 
 pub fn short_version() -> &'static str {
