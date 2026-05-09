@@ -16,6 +16,9 @@ shadow!(build);
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
+    println!("launching {}", short_version());
+    println!("{}", single_line_version());
+
     let config_dir = args.config_dir;
 
     let config = get_config_or_create(config_dir.as_ref())?;
