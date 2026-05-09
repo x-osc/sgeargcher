@@ -1,6 +1,6 @@
 use std::sync::LazyLock;
 
-use actix_web::{App, HttpResponse, HttpServer, Responder, get, web};
+use actix_web::{App, HttpResponse, HttpServer, Responder, get, middleware, web};
 use maud::{DOCTYPE, Markup, html};
 use rust_embed::RustEmbed;
 
@@ -32,6 +32,8 @@ struct Assets;
 pub async fn run(config: MetaSearchConfig) -> anyhow::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(middleware::Compress::default())
+            .wrap(middleware::NormalizePath::trim())
             .service(index::get)
             .service(search::get)
             .service(static_handler)
