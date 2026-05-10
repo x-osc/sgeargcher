@@ -57,7 +57,7 @@ pub async fn get(data: web::Data<AppState>, settings: ClientSettings) -> impl Re
             head {
                 (head_stuff(&settings))
                 title { "settings" }
-                link rel="stylesheet" href="assets/settings.css";
+                link rel="stylesheet" href="/assets/settings.css";
             }
             body.settings-page {
                 main {

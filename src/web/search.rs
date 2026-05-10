@@ -59,6 +59,7 @@ pub async fn get(
             head {
                 (head_stuff(&settings))
                 title { (query) " - sgeargcher" }
+                link rel="stylesheet" href="/assets/search.css";
             }
             body.search-page {
                 main {

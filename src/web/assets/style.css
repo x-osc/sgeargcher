@@ -112,10 +112,6 @@ input[type="submit"]:active {
     border-color: var(--accent);
 }
 
-.search-page #search-form {
-    margin-bottom: 0.4rem;
-}
-
 a {
     color: var(--link);
     text-decoration: none;
@@ -123,86 +119,4 @@ a {
 
 a:visited {
     color: var(--link-visited);
-}
-
-.result {
-    margin-top: 0.2rem;
-    border-top: 1px solid var(--bg-4);
-}
-
-.title {
-    margin-top: 0.6rem;
-    margin-bottom: 0.1rem;
-}
-
-.description {
-    margin-top: 0.7rem;
-    margin-bottom: 0.2rem;
-}
-
-.url a {
-    color: var(--fg-2);
-}
-
-.engines {
-    display: flex;
-    justify-content: end;
-    font-size: 12px;
-    gap: 0.5em;
-    color: var(--fg-2);
-}
-
-.answer {
-    padding: 0.25rem 0.5rem;
-    border: 1px solid var(--bg-4);
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-:where(.answer) p {
-    color: var(--fg-1);
-    margin: 0.2rem 0;
-}
-
-.answer-query {
-    opacity: 0.65;
-}
-
-.answer-result {
-    font-size: 1.17rem;
-    font-weight: bold;
-    color: var(--fg-1);
-}
-
-.dictionary-word {
-    margin-top: 0.4rem;
-    margin-bottom: 0.3rem;
-}
-
-.dictionary-part-of-speech {
-    color: var(--fg-2);
-    font-style: italic;
-}
-
-.dictionary-example {
-    margin-top: 0.8rem;
-    margin-bottom: 0.8rem;
-}
-
-.calc-constant {
-    color: var(--syntax-constant);
-    white-space: pre-wrap;
-}
-.calc-string {
-    color: var(--syntax-string);
-}
-.calc-func {
-    color: var(--syntax-func);
-}
-
-.headers-title {
-    font-size: 1.05em;
-}
-.header {
-    font-weight: bold;
 }
