@@ -1,55 +1,58 @@
 use core::str;
+use std::sync::LazyLock;
 
 use anyhow::Context;
 use async_trait::async_trait;
 use percent_encoding::utf8_percent_encode;
+use rand::rngs::SmallRng;
 use scraper::{Html, Selector};
 use serde_json::Value;
-use wreq_util::{Emulation, EmulationOS, EmulationOption};
+use wreq_util::{Emulation, EmulationOS};
 
 use crate::{
-    engine::scrapers::{Engine, EngineResponse, SearchContext},
+    engine::{
+        client::{CLIENT_POOL, ClientProfile},
+        scrapers::{Engine, EngineResponse, SearchContext},
+    },
     utils::{choose_weighted, url::FRAGMENT},
 };
 
-const BROWSER: &[(Emulation, f64)] = &[
-    (Emulation::Chrome100, 0.1),
-    (Emulation::Chrome101, 0.1),
-    (Emulation::Chrome104, 0.1),
-    (Emulation::Chrome105, 0.1),
-    (Emulation::Chrome106, 0.1),
-    (Emulation::Chrome107, 0.1),
-    (Emulation::Chrome108, 0.1),
-    (Emulation::Chrome110, 0.1),
-    (Emulation::Chrome114, 0.1),
-    (Emulation::Chrome116, 0.1),
-    (Emulation::Chrome117, 0.1),
-    (Emulation::Chrome118, 0.1),
-    (Emulation::Chrome119, 0.08),
-    (Emulation::Chrome120, 0.05),
-    (Emulation::Chrome123, 0.03),
-];
-
-const BROWSER_MOBILE: &[(Emulation, f64)] = &[
-    (Emulation::Chrome100, 0.1),
-    (Emulation::Chrome101, 0.1),
-    (Emulation::Chrome104, 0.1),
-    (Emulation::Chrome105, 0.1),
-    (Emulation::Chrome106, 0.1),
-    (Emulation::Chrome107, 0.1),
-    (Emulation::Chrome108, 0.1),
-    (Emulation::Chrome110, 0.1),
-    (Emulation::Chrome114, 0.1),
-    (Emulation::Chrome116, 0.1),
-    (Emulation::Chrome117, 0.1),
-    (Emulation::Chrome118, 0.1),
-    (Emulation::Chrome119, 0.08),
-    (Emulation::Chrome120, 0.05),
-    (Emulation::Chrome123, 0.03),
-];
-
-const OS: &[(EmulationOS, f64)] = &[(EmulationOS::Windows, 0.1), (EmulationOS::MacOS, 0.1)];
-const OS_MOBILE: &[(EmulationOS, f64)] = &[(EmulationOS::Android, 0.5), (EmulationOS::IOS, 0.6)];
+static CLIENTS: LazyLock<Box<[(ClientProfile, f64)]>> = LazyLock::new(|| {
+    Box::new([
+        (
+            ClientProfile::new(Emulation::Chrome137, EmulationOS::Windows),
+            1.0,
+        ),
+        (
+            ClientProfile::new(Emulation::Chrome135, EmulationOS::Windows),
+            1.0,
+        ),
+        (
+            ClientProfile::new(Emulation::Chrome136, EmulationOS::Windows),
+            1.0,
+        ),
+        (
+            ClientProfile::new(Emulation::Safari18_5, EmulationOS::MacOS),
+            0.5,
+        ),
+        (
+            ClientProfile::new(Emulation::Safari17_5, EmulationOS::MacOS),
+            0.5,
+        ),
+        (
+            ClientProfile::new(Emulation::Safari17_4_1, EmulationOS::MacOS),
+            0.5,
+        ),
+        (
+            ClientProfile::new(Emulation::Chrome137, EmulationOS::Android),
+            2.0,
+        ),
+        (
+            ClientProfile::new(Emulation::SafariIos18_1_1, EmulationOS::IOS),
+            1.5,
+        ),
+    ])
+});
 
 // yahoo japan is pretty much just google results
 pub struct YahooJapanSearch;
@@ -65,31 +68,9 @@ impl Engine for YahooJapanSearch {
             encoded
         );
 
-        let opt_browser_os: anyhow::Result<(&Emulation, &EmulationOS)> = {
-            let mut rng = rand::rng();
-            let browser = choose_weighted(BROWSER, &mut rng)?;
-            let browser_mobile = choose_weighted(BROWSER_MOBILE, &mut rng)?;
-            let os = choose_weighted(OS, &mut rng)?;
-            let os_mobile = choose_weighted(OS_MOBILE, &mut rng)?;
-            let result = choose_weighted(
-                &[((browser, os), 0.1), ((browser_mobile, os_mobile), 0.5)],
-                &mut rng,
-            )?
-            .to_owned();
-            Ok(result)
-        };
-        let (browser, os) = opt_browser_os?;
-
-        let client = wreq::Client::builder()
-            .emulation(
-                EmulationOption::builder()
-                    .emulation(*browser)
-                    .emulation_os(*os)
-                    .build(),
-            )
-            // idk what this is for but 4get does it so
-            .http2_only()
-            .build()?;
+        let mut rng: SmallRng = rand::make_rng();
+        let profile = choose_weighted(&CLIENTS, &mut rng)?;
+        let client = CLIENT_POOL.get(&profile)?;
 
         let html = client.get(&url).send().await?.text().await?;
 

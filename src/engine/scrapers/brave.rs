@@ -1,35 +1,32 @@
 use core::str;
+use std::sync::LazyLock;
 
 use async_trait::async_trait;
 use percent_encoding::utf8_percent_encode;
+use rand::rngs::SmallRng;
 use scraper::{Html, Selector};
-use wreq_util::{Emulation, EmulationOS, EmulationOption};
+use wreq_util::{Emulation, EmulationOS};
 
 use crate::{
-    engine::scrapers::{Engine, EngineResponse, SearchContext},
+    engine::{
+        client::{CLIENT_POOL, ClientProfile},
+        scrapers::{Engine, EngineResponse, SearchContext},
+    },
     utils::{choose_weighted, url::FRAGMENT},
 };
 
-const BROWSER: &[(Emulation, f64)] = &[
-    (Emulation::Firefox117, 0.07),
-    (Emulation::Firefox128, 0.09),
-    (Emulation::Firefox133, 0.1),
-    (Emulation::Firefox135, 0.1),
-    (Emulation::Firefox136, 0.06),
-    (Emulation::Firefox139, 0.01),
-    (Emulation::Chrome132, 0.08),
-    (Emulation::Chrome133, 0.1),
-    (Emulation::Chrome134, 0.1),
-    (Emulation::Chrome135, 0.1),
-    (Emulation::Chrome136, 0.1),
-    (Emulation::Chrome137, 0.08),
-];
-
-const OS: &[(EmulationOS, f64)] = &[
-    (EmulationOS::Windows, 0.5),
-    (EmulationOS::MacOS, 0.03),
-    (EmulationOS::Linux, 0.05),
-];
+static CLIENTS: LazyLock<Box<[(ClientProfile, f64)]>> = LazyLock::new(|| {
+    Box::new([
+        (
+            ClientProfile::new(Emulation::Chrome137, EmulationOS::Windows),
+            1.0,
+        ),
+        (
+            ClientProfile::new(Emulation::Safari18_5, EmulationOS::MacOS),
+            0.5,
+        ),
+    ])
+});
 
 pub struct BraveSearch;
 
@@ -39,22 +36,9 @@ impl Engine for BraveSearch {
         let encoded = utf8_percent_encode(&query.query, FRAGMENT);
         let url = format!("https://search.brave.com/search?q={}&spellcheck=0", encoded);
 
-        let opt_browser_os: anyhow::Result<(&Emulation, &EmulationOS)> = {
-            let mut rng = rand::rng();
-            let browser = choose_weighted(BROWSER, &mut rng)?;
-            let os = choose_weighted(OS, &mut rng)?;
-            Ok((browser, os))
-        };
-        let (browser, os) = opt_browser_os?;
-
-        let client = wreq::Client::builder()
-            .emulation(
-                EmulationOption::builder()
-                    .emulation(*browser)
-                    .emulation_os(*os)
-                    .build(),
-            )
-            .build()?;
+        let mut rng: SmallRng = rand::make_rng();
+        let profile = choose_weighted(&CLIENTS, &mut rng)?;
+        let client = CLIENT_POOL.get(&profile)?;
 
         let html = client.get(&url).send().await?.text().await?;
 

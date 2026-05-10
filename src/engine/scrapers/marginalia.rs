@@ -1,17 +1,22 @@
-use std::time::Duration;
+use std::{sync::LazyLock, time::Duration};
 
 use async_trait::async_trait;
 use percent_encoding::utf8_percent_encode;
 use rand::RngExt;
 use scraper::{Html, Selector};
-use wreq_util::{Emulation, EmulationOS, EmulationOption};
+use wreq_util::{Emulation, EmulationOS};
 
 use crate::{
-    engine::scrapers::{Engine, EngineResponse, SearchContext},
+    engine::{
+        client::{CLIENT_POOL, ClientProfile},
+        scrapers::{Engine, EngineResponse, SearchContext},
+    },
     utils::url::FRAGMENT,
 };
 
 const DOMAIN: &str = "https://old-search.marginalia.nu";
+static CLIENT: LazyLock<ClientProfile> =
+    LazyLock::new(|| ClientProfile::new(Emulation::Firefox139, EmulationOS::Linux));
 
 pub struct MarginaliaSearch;
 
@@ -21,14 +26,7 @@ impl Engine for MarginaliaSearch {
         let encoded = utf8_percent_encode(&query.query, FRAGMENT);
         let url = format!("{DOMAIN}/search?query={}", encoded);
 
-        let client = wreq::Client::builder()
-            .emulation(
-                EmulationOption::builder()
-                    .emulation(Emulation::Chrome133)
-                    .emulation_os(EmulationOS::Windows)
-                    .build(),
-            )
-            .build()?;
+        let client = CLIENT_POOL.get(&CLIENT)?;
 
         let mut html = client.get(&url).send().await?.text().await?;
         // detect bot check

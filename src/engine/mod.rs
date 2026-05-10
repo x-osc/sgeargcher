@@ -13,6 +13,7 @@ use crate::engine::{
 };
 
 pub mod answers;
+pub mod client;
 pub mod config;
 pub mod ranking;
 pub mod scrapers;

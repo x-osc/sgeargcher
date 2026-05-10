@@ -1,17 +1,24 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::LazyLock};
 
 use async_trait::async_trait;
 use maud::{PreEscaped, html};
 use percent_encoding::utf8_percent_encode;
 use serde::Deserialize;
 use url::Url;
-use wreq_util::{Emulation, EmulationOS, EmulationOption};
+use wreq_util::{Emulation, EmulationOS};
 
 use crate::{
-    engine::{answers::AnswerEngine, scrapers::SearchContext},
+    engine::{
+        answers::AnswerEngine,
+        client::{CLIENT_POOL, ClientProfile},
+        scrapers::SearchContext,
+    },
     regex,
     utils::{to_title_case, url::FRAGMENT},
 };
+
+static CLIENT: LazyLock<ClientProfile> =
+    LazyLock::new(|| ClientProfile::new(Emulation::Firefox139, EmulationOS::Linux));
 
 pub struct DictionaryAnswer;
 
@@ -37,15 +44,7 @@ impl AnswerEngine for DictionaryAnswer {
         }?
         .trim();
 
-        let client = wreq::Client::builder()
-            .emulation(
-                EmulationOption::builder()
-                    .emulation(Emulation::Firefox128)
-                    .emulation_os(EmulationOS::Windows)
-                    .build(),
-            )
-            .build()
-            .ok()?;
+        let client = CLIENT_POOL.get(&CLIENT).ok()?;
 
         let lower = word.to_lowercase();
         let title = to_title_case(word);
