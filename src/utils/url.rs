@@ -101,7 +101,7 @@ pub fn normalize_url(url: &str) -> String {
     }
 
     // remove tracking params
-    const TRACKING_PARAMS: &[&str] = &["ref_src", "_sm_au_"];
+    const TRACKING_PARAMS: &[&str] = &["ref_src", "_sm_au_", "srsltid"];
     let new_query_pairs: Vec<_> = url
         .query_pairs()
         .filter(|(k, _)| !TRACKING_PARAMS.contains(&k.as_ref()))
