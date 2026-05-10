@@ -1,6 +1,6 @@
 use actix_web::{
     FromRequest, HttpRequest, HttpResponse, HttpResponseBuilder, Responder, dev::Payload, get,
-    post, web,
+    http::header, post, web,
 };
 use futures::future::{Ready, ready};
 use maud::{DOCTYPE, html};
@@ -98,6 +98,6 @@ pub async fn post(data: web::Data<AppState>, form: web::Form<SettingsForm>) -> i
 
     settings
         .apply_to(HttpResponse::SeeOther())
-        .insert_header(("Location", "/settings"))
+        .insert_header((header::LOCATION, "/settings"))
         .finish()
 }

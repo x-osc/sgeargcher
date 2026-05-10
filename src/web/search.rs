@@ -1,6 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
-use actix_web::{HttpRequest, HttpResponse, Responder, get, web};
+use actix_web::{HttpRequest, HttpResponse, Responder, get, http::header, web};
 use maud::{DOCTYPE, Markup, html};
 
 use crate::{
@@ -22,10 +22,9 @@ pub async fn get(
 ) -> impl Responder {
     let query = params.get("q").map(|s| s.trim()).unwrap_or("");
     if query.is_empty() {
-        return web::Redirect::to("/")
-            .see_other()
-            .respond_to(&req)
-            .map_into_boxed_body();
+        return HttpResponse::SeeOther()
+            .insert_header((header::LOCATION, "/"))
+            .finish();
     }
 
     let connection_info = req.connection_info();
