@@ -7,6 +7,7 @@ use rust_embed::RustEmbed;
 
 use crate::{config::MetaSearchConfig, web::settings::ClientSettings};
 
+mod autocomplete;
 mod config;
 mod index;
 mod search;
@@ -62,6 +63,7 @@ pub async fn run(config: MetaSearchConfig) -> anyhow::Result<()> {
             .wrap(middleware::NormalizePath::trim())
             .service(index::get)
             .service(search::get)
+            .service(autocomplete::get)
             .service(settings::get)
             .service(settings::post)
             .service(Files::new("/themes", &data.themes_dir))

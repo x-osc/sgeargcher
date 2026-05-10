@@ -6,6 +6,7 @@ use crate::engine::{
         AnswerEngineMetadata, dictionary::DictionaryAnswer, headers::HeadersAnswer, ip::IpAnswer,
         lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer, user_agent::UserAgentAnswer,
     },
+    autocomplete::google::GoogleCompletion,
     config::{CustomRank, EngineSetting, SearchConfig},
     scrapers::{
         EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
@@ -31,6 +32,8 @@ pub static METASEARCHER: LazyLock<MetaSearcher> = LazyLock::new(|| {
         Box::new(YahooJapanSearch),
         EngineMetadata::new("yahoo_japan"),
     );
+
+    searcher.add_completion_engine(Box::new(GoogleCompletion), "google".into());
 
     searcher.add_answer_engine(Box::new(IpAnswer), AnswerEngineMetadata::new("ip"));
     searcher.add_answer_engine(

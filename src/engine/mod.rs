@@ -7,12 +7,14 @@ use tokio::time::timeout;
 
 use crate::engine::{
     answers::{AnswerEngine, AnswerEngineEntry, AnswerEngineMetadata},
+    autocomplete::{CompletionEngine, CompletionEngineEntry, CompletionResponse},
     config::SearchConfig,
     ranking::merge_and_rank_responses,
     scrapers::{Engine, EngineEntry, EngineMetadata, EngineResponse, SearchContext},
 };
 
 pub mod answers;
+pub mod autocomplete;
 pub mod client;
 pub mod config;
 pub mod ranking;
@@ -41,6 +43,7 @@ pub struct AnswerResult {
 
 pub struct MetaSearcher {
     engines: Vec<EngineEntry>,
+    autocomplete_engines: Vec<CompletionEngineEntry>,
     answer_engines: Vec<AnswerEngineEntry>,
 }
 
@@ -48,6 +51,7 @@ impl MetaSearcher {
     pub fn new() -> Self {
         Self {
             engines: Vec::new(),
+            autocomplete_engines: Vec::new(),
             answer_engines: Vec::new(),
         }
     }
@@ -63,6 +67,11 @@ impl MetaSearcher {
     ) {
         self.answer_engines
             .push(AnswerEngineEntry { engine, metadata });
+    }
+
+    pub fn add_completion_engine(&mut self, engine: Box<dyn CompletionEngine>, name: String) {
+        self.autocomplete_engines
+            .push(CompletionEngineEntry { engine, name });
     }
 
     pub async fn run_search(
@@ -202,5 +211,35 @@ impl MetaSearcher {
         };
 
         timeout(config.timeout, fut).await.ok().flatten()
+    }
+
+    pub async fn get_autocomplete(
+        &self,
+        query: SearchContext,
+        config: &SearchConfig,
+    ) -> Vec<CompletionResponse> {
+        let futures = self.autocomplete_engines.iter().map(|engine_entry| {
+            let q = query.clone();
+            async move {
+                let result = tokio::time::timeout(config.timeout, engine_entry.engine.query(q))
+                    .await
+                    .with_context(|| format!("{} timed out", engine_entry.name))
+                    .flatten();
+
+                if let Err(e) = &result {
+                    println!("{}", e);
+                }
+
+                (engine_entry.name.clone(), result)
+            }
+        });
+
+        let results_list = join_all(futures).await;
+
+        results_list
+            .into_iter()
+            .filter_map(|r| Some(r.1.ok()?))
+            .flatten()
+            .collect()
     }
 }
