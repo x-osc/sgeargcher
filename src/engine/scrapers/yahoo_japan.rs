@@ -3,10 +3,10 @@ use std::sync::LazyLock;
 
 use anyhow::Context;
 use async_trait::async_trait;
-use percent_encoding::utf8_percent_encode;
 use rand::rngs::SmallRng;
 use scraper::{Html, Selector};
 use serde_json::Value;
+use url::Url;
 use wreq_util::{Emulation, EmulationOS};
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
         client::{CLIENT_POOL, ClientProfile},
         scrapers::{Engine, EngineResponse, SearchContext},
     },
-    utils::{choose_weighted, url::FRAGMENT},
+    utils::choose_weighted,
 };
 
 static CLIENTS: LazyLock<Box<[(ClientProfile, f64)]>> = LazyLock::new(|| {
@@ -60,13 +60,17 @@ pub struct YahooJapanSearch;
 #[async_trait]
 impl Engine for YahooJapanSearch {
     async fn query(&self, query: SearchContext) -> anyhow::Result<Vec<EngineResponse>> {
-        let encoded = utf8_percent_encode(&query.query, FRAGMENT);
-        let url = format!(
-            // fr: referrer; edgesc is chrome(ium) identifier
-            // qrw: dont do spell correction
-            "https://search.yahoo.co.jp/search?p={}&ei=UTF-8&fr=edgesc&qrw=0",
-            encoded
-        );
+        // fr: referrer; edgesc is chrome(ium) identifier
+        // qrw: dont do spell correction
+        let url = Url::parse_with_params(
+            "https://search.yahoo.co.jp/search",
+            &[
+                ("p", query.query.as_str()),
+                ("ei", "UTF-8"),
+                ("fr", "edgesc"),
+                ("qrw", "0"),
+            ],
+        )?;
 
         let mut rng: SmallRng = rand::make_rng();
         let profile = choose_weighted(&CLIENTS, &mut rng)?;

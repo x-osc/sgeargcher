@@ -2,16 +2,13 @@ use core::str;
 use std::sync::LazyLock;
 
 use async_trait::async_trait;
-use percent_encoding::utf8_percent_encode;
 use scraper::{Html, Selector};
+use url::Url;
 use wreq_util::{Emulation, EmulationOS};
 
-use crate::{
-    engine::{
-        client::{CLIENT_POOL, ClientProfile},
-        scrapers::{Engine, EngineResponse, SearchContext},
-    },
-    utils::url::FRAGMENT,
+use crate::engine::{
+    client::{CLIENT_POOL, ClientProfile},
+    scrapers::{Engine, EngineResponse, SearchContext},
 };
 
 static CLIENT: LazyLock<ClientProfile> =
@@ -22,8 +19,7 @@ pub struct WibySearch;
 #[async_trait]
 impl Engine for WibySearch {
     async fn query(&self, query: SearchContext) -> anyhow::Result<Vec<EngineResponse>> {
-        let encoded = utf8_percent_encode(&query.query, FRAGMENT);
-        let url = format!("https://wiby.me/?q={}", encoded);
+        let url = Url::parse_with_params("https://wiby.me/", &[("q", query.query.as_str())])?;
 
         let client = CLIENT_POOL.get(&CLIENT)?;
 

@@ -2,16 +2,13 @@ use core::str;
 use std::sync::LazyLock;
 
 use async_trait::async_trait;
-use percent_encoding::utf8_percent_encode;
 use scraper::{Html, Selector};
+use url::Url;
 use wreq_util::{Emulation, EmulationOS};
 
-use crate::{
-    engine::{
-        client::{CLIENT_POOL, ClientProfile},
-        scrapers::{Engine, EngineResponse, SearchContext},
-    },
-    utils::url::FRAGMENT,
+use crate::engine::{
+    client::{CLIENT_POOL, ClientProfile},
+    scrapers::{Engine, EngineResponse, SearchContext},
 };
 
 static CLIENT: LazyLock<ClientProfile> =
@@ -22,8 +19,10 @@ pub struct MojeekSearch;
 #[async_trait]
 impl Engine for MojeekSearch {
     async fn query(&self, query: SearchContext) -> anyhow::Result<Vec<EngineResponse>> {
-        let encoded = utf8_percent_encode(&query.query, FRAGMENT);
-        let url = format!("https://www.mojeek.com/search?q={}", encoded);
+        let url = Url::parse_with_params(
+            "https://www.mojeek.com/search",
+            &[("q", query.query.as_str())],
+        )?;
 
         let client = CLIENT_POOL.get(&CLIENT)?;
 

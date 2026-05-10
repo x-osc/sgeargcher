@@ -1,17 +1,14 @@
 use std::{sync::LazyLock, time::Duration};
 
 use async_trait::async_trait;
-use percent_encoding::utf8_percent_encode;
 use rand::RngExt;
 use scraper::{Html, Selector};
+use url::Url;
 use wreq_util::{Emulation, EmulationOS};
 
-use crate::{
-    engine::{
-        client::{CLIENT_POOL, ClientProfile},
-        scrapers::{Engine, EngineResponse, SearchContext},
-    },
-    utils::url::FRAGMENT,
+use crate::engine::{
+    client::{CLIENT_POOL, ClientProfile},
+    scrapers::{Engine, EngineResponse, SearchContext},
 };
 
 const DOMAIN: &str = "https://old-search.marginalia.nu";
@@ -23,8 +20,10 @@ pub struct MarginaliaSearch;
 #[async_trait]
 impl Engine for MarginaliaSearch {
     async fn query(&self, query: SearchContext) -> anyhow::Result<Vec<EngineResponse>> {
-        let encoded = utf8_percent_encode(&query.query, FRAGMENT);
-        let url = format!("{DOMAIN}/search?query={}", encoded);
+        let url = Url::parse_with_params(
+            &format!("{DOMAIN}/search"),
+            &[("query", query.query.as_str())],
+        )?;
 
         let client = CLIENT_POOL.get(&CLIENT)?;
 

@@ -2,9 +2,9 @@ use core::str;
 use std::sync::LazyLock;
 
 use async_trait::async_trait;
-use percent_encoding::utf8_percent_encode;
 use rand::rngs::SmallRng;
 use scraper::{Html, Selector};
+use url::Url;
 use wreq_util::{Emulation, EmulationOS};
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
         client::{CLIENT_POOL, ClientProfile},
         scrapers::{Engine, EngineResponse, SearchContext},
     },
-    utils::{choose_weighted, url::FRAGMENT},
+    utils::choose_weighted,
 };
 
 static CLIENTS: LazyLock<Box<[(ClientProfile, f64)]>> = LazyLock::new(|| {
@@ -33,8 +33,10 @@ pub struct DuckDuckGoSearch;
 #[async_trait]
 impl Engine for DuckDuckGoSearch {
     async fn query(&self, query: SearchContext) -> anyhow::Result<Vec<EngineResponse>> {
-        let encoded = utf8_percent_encode(&query.query, FRAGMENT);
-        let url = format!("https://html.duckduckgo.com/html/?q={}", encoded);
+        let url = Url::parse_with_params(
+            "https://html.duckduckgo.com/html/",
+            &[("q", query.query.as_str())],
+        )?;
 
         let mut rng: SmallRng = rand::make_rng();
         let profile = choose_weighted(&CLIENTS, &mut rng)?;
