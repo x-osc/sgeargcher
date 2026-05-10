@@ -1,4 +1,4 @@
-use std::sync::LazyLock;
+use std::{sync::LazyLock, time::Duration};
 
 use crate::engine::{
     MetaSearcher,
@@ -105,4 +105,6 @@ pub static DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| Search
         CustomRank::domain("wikihow.com", 1.0),
     ]
     .into(),
+
+    timeout: Duration::from_millis(3500),
 });

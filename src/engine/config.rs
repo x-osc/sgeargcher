@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use regex::Regex;
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use crate::engine::MetaSearcher;
 
@@ -8,6 +8,7 @@ use crate::engine::MetaSearcher;
 pub struct SearchConfig {
     pub engine_settings: HashMap<String, EngineSetting>,
     pub custom_rank: Vec<CustomRank>,
+    pub timeout: Duration,
 }
 
 impl SearchConfig {
@@ -19,6 +20,7 @@ impl SearchConfig {
                 .map(|e| (e.metadata.name.clone(), EngineSetting::default()))
                 .collect(),
             custom_rank: Vec::new(),
+            timeout: Duration::from_millis(5000),
         }
     }
 

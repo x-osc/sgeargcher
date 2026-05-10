@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    time::{Duration, Instant},
-};
+use std::{collections::HashMap, time::Instant};
 
 use anyhow::Context;
 use futures::{StreamExt, future::join_all, stream::FuturesUnordered};
@@ -76,7 +73,7 @@ impl MetaSearcher {
 
         let (responses, answer) = tokio::join!(
             self.get_all_responses(query.clone(), config),
-            self.get_answer(query)
+            self.get_answer(query, config)
         );
 
         let responses: Vec<_> = responses
@@ -116,11 +113,10 @@ impl MetaSearcher {
             async move {
                 let start = Instant::now();
 
-                let result =
-                    tokio::time::timeout(Duration::from_millis(5000), engine_entry.engine.query(q))
-                        .await
-                        .with_context(|| format!("{} timed out", engine_entry.metadata.name))
-                        .flatten();
+                let result = tokio::time::timeout(config.timeout, engine_entry.engine.query(q))
+                    .await
+                    .with_context(|| format!("{} timed out", engine_entry.metadata.name))
+                    .flatten();
 
                 let elapsed = start.elapsed();
 
@@ -152,7 +148,11 @@ impl MetaSearcher {
         results_list.into_iter().collect()
     }
 
-    pub async fn get_answer(&self, query: SearchContext) -> Option<AnswerResult> {
+    pub async fn get_answer(
+        &self,
+        query: SearchContext,
+        config: &SearchConfig,
+    ) -> Option<AnswerResult> {
         let mut futures = FuturesUnordered::new();
 
         for (index, engine_entry) in self.answer_engines.iter().enumerate() {
@@ -200,6 +200,6 @@ impl MetaSearcher {
             None
         };
 
-        timeout(Duration::from_secs(5), fut).await.ok().flatten()
+        timeout(config.timeout, fut).await.ok().flatten()
     }
 }

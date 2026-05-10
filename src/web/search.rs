@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use actix_web::{HttpRequest, HttpResponse, Responder, get, web};
 use maud::{DOCTYPE, Markup, html};
@@ -6,6 +6,7 @@ use maud::{DOCTYPE, Markup, html};
 use crate::{
     engine::{SearchResult, scrapers::SearchContext},
     web::{
+        AppState,
         config::{DEFAULT_USER_CONFIG, METASEARCHER},
         head_stuff,
         settings::ClientSettings,
@@ -15,6 +16,7 @@ use crate::{
 #[get("/search")]
 pub async fn get(
     params: web::Query<HashMap<String, String>>,
+    data: web::Data<AppState>,
     req: HttpRequest,
     settings: ClientSettings,
 ) -> impl Responder {
@@ -37,7 +39,8 @@ pub async fn get(
         .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or_default().to_string()))
         .collect();
 
-    let config = DEFAULT_USER_CONFIG.merge_into_default(&METASEARCHER);
+    let mut config = DEFAULT_USER_CONFIG.merge_into_default(&METASEARCHER);
+    config.timeout = Duration::from_millis(data.config.timeout);
 
     let response = METASEARCHER
         .run_search(

@@ -54,6 +54,7 @@ pub struct MetaSearchConfig {
     #[serde(skip)]
     pub config_dir: PathBuf,
     pub themes_dir: PathBuf,
+    pub timeout: u64,
     pub server: ServerConfig,
 }
 
@@ -62,6 +63,7 @@ impl Default for MetaSearchConfig {
         Self {
             config_dir: "config".into(),
             themes_dir: "themes".into(),
+            timeout: 3500,
             server: Default::default(),
         }
     }
