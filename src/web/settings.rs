@@ -1,9 +1,5 @@
 use actix_web::{
-    FromRequest, HttpMessage, HttpRequest, HttpResponse, HttpResponseBuilder, Responder,
-    body::MessageBody,
-    dev::{Payload, ServiceRequest, ServiceResponse},
-    get,
-    middleware::Next,
+    FromRequest, HttpRequest, HttpResponse, HttpResponseBuilder, Responder, dev::Payload, get,
     post, web,
 };
 use futures::future::{Ready, ready};
@@ -40,11 +36,7 @@ impl FromRequest for ClientSettings {
     type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
-        let settings = req
-            .extensions()
-            .get::<ClientSettings>()
-            .cloned()
-            .unwrap_or_default();
+        let settings = ClientSettings::from_cookies(req);
         ready(Ok(settings))
     }
 }
@@ -108,13 +100,4 @@ pub async fn post(data: web::Data<AppState>, form: web::Form<SettingsForm>) -> i
         .apply_to(HttpResponse::SeeOther())
         .insert_header(("Location", "/settings"))
         .finish()
-}
-
-pub async fn settings_middleware(
-    req: ServiceRequest,
-    next: Next<impl MessageBody>,
-) -> Result<ServiceResponse<impl MessageBody>, actix_web::Error> {
-    let settings = ClientSettings::from_cookies(req.request());
-    req.extensions_mut().insert(settings);
-    next.call(req).await
 }

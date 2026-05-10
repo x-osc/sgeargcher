@@ -5,10 +5,7 @@ use actix_web::{App, HttpResponse, HttpServer, Responder, get, middleware, web};
 use maud::{DOCTYPE, Markup, html};
 use rust_embed::RustEmbed;
 
-use crate::{
-    config::MetaSearchConfig,
-    web::settings::{ClientSettings, settings_middleware},
-};
+use crate::{config::MetaSearchConfig, web::settings::ClientSettings};
 
 mod config;
 mod index;
@@ -63,7 +60,6 @@ pub async fn run(config: MetaSearchConfig) -> anyhow::Result<()> {
             .app_data(data.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::NormalizePath::trim())
-            .wrap(middleware::from_fn(settings_middleware))
             .service(index::get)
             .service(search::get)
             .service(settings::get)
