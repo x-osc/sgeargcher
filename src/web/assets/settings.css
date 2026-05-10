@@ -1,0 +1,25 @@
+.settings-page main {
+    padding-top: 0.5rem;
+}
+
+h1 {
+    margin-top: 0.68rem;
+}
+
+a:visited {
+    color: var(--link);
+}
+
+.save-settings {
+    margin-top: 1rem;
+    display: block;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.15rem;
+}
+
+select {
+    display: block;
+}

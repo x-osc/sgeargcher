@@ -1,5 +1,8 @@
 # metasearcher config
 
+# this dir is resolved relative to the config dir by default
+themes_dir = "themes"
+
 [server]
 # set to 0.0.0.0 to bind to all addresses on host
 bind = "127.0.0.1"

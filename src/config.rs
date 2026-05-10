@@ -43,16 +43,31 @@ pub fn get_config_or_create(dir: Option<&PathBuf>) -> anyhow::Result<MetaSearchC
     }
 
     let contents = fs::read_to_string(config_path)?;
-    Ok(toml::from_str(&contents)?)
+    let mut config = toml::from_str::<MetaSearchConfig>(&contents)?;
+    config.config_dir = dir.to_owned();
+    Ok(config)
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct MetaSearchConfig {
+    #[serde(skip)]
+    pub config_dir: PathBuf,
+    pub themes_dir: PathBuf,
     pub server: ServerConfig,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+impl Default for MetaSearchConfig {
+    fn default() -> Self {
+        Self {
+            config_dir: "config".into(),
+            themes_dir: "themes".into(),
+            server: Default::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ServerConfig {
     pub bind: String,

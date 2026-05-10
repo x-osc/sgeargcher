@@ -1,6 +1,58 @@
 use std::sync::LazyLock;
 
-use crate::engine::config::{CustomRank, EngineSetting, SearchConfig};
+use crate::engine::{
+    MetaSearcher,
+    answers::{
+        AnswerEngineMetadata, dictionary::DictionaryAnswer, headers::HeadersAnswer, ip::IpAnswer,
+        lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer, user_agent::UserAgentAnswer,
+    },
+    config::{CustomRank, EngineSetting, SearchConfig},
+    scrapers::{
+        EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
+        marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
+        yahoo_japan::YahooJapanSearch,
+    },
+};
+
+pub static METASEARCHER: LazyLock<MetaSearcher> = LazyLock::new(|| {
+    let mut searcher = MetaSearcher::new();
+    searcher.add_engine(
+        Box::new(DuckDuckGoSearch),
+        EngineMetadata::new("duckduckgo"),
+    );
+    searcher.add_engine(
+        Box::new(MarginaliaSearch),
+        EngineMetadata::new("marginalia"),
+    );
+    searcher.add_engine(Box::new(BraveSearch), EngineMetadata::new("brave"));
+    searcher.add_engine(Box::new(WibySearch), EngineMetadata::new("wiby"));
+    searcher.add_engine(Box::new(MojeekSearch), EngineMetadata::new("mojeek"));
+    searcher.add_engine(
+        Box::new(YahooJapanSearch),
+        EngineMetadata::new("yahoo_japan"),
+    );
+
+    searcher.add_answer_engine(Box::new(IpAnswer), AnswerEngineMetadata::new("ip"));
+    searcher.add_answer_engine(
+        Box::new(LoremIpsumAnswer),
+        AnswerEngineMetadata::new("lorem ipsum"),
+    );
+    searcher.add_answer_engine(
+        Box::new(DictionaryAnswer),
+        AnswerEngineMetadata::new("wiktionary"),
+    );
+    searcher.add_answer_engine(Box::new(NumbatAnswer), AnswerEngineMetadata::new("numbat"));
+    searcher.add_answer_engine(
+        Box::new(UserAgentAnswer),
+        AnswerEngineMetadata::new("user agent"),
+    );
+    searcher.add_answer_engine(
+        Box::new(HeadersAnswer),
+        AnswerEngineMetadata::new("headers"),
+    );
+
+    searcher
+});
 
 pub static DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| SearchConfig {
     engine_settings: [

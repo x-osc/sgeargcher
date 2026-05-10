@@ -1,0 +1,19 @@
+:root {
+    --bg-1: #181616;
+    --bg-2: #12120f;
+    --bg-3: #1d1c19;
+    --bg-4: #393836;
+
+    --fg-1: #c5c9c5;
+    --fg-2: #a6a69c;
+    --fg-3: #1d1c19;
+
+    --accent: #c8c093;
+
+    --link: #8ea4a2;
+    --link-visited: #938aa9;
+
+    --syntax-string: #87a987;
+    --syntax-constant: #8ba4b0;
+    --syntax-func: #c4746e;
+}

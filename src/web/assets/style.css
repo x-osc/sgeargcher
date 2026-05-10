@@ -36,6 +36,15 @@ body {
     box-sizing: border-box;
     font-family: monospace;
     line-height: 1.2;
+    word-break: break-word;
+}
+
+.settings-link,
+.settings-link:visited {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: var(--link);
 }
 
 .index-page main {
@@ -49,21 +58,22 @@ body {
     text-align: center;
 }
 
-.search-page main {
+main:not(.dont) {
     max-width: 45rem;
     padding: 1rem 0.5rem;
     background: var(--bg-1);
-    min-height: 100%;
     margin-left: calc((70rem - 45rem) / 2);
 }
 
 @media screen and (max-width: 70rem) {
-    .search-page main {
+    main:not(.dont) {
         margin: 0 auto;
     }
 }
 
-input {
+input,
+textarea,
+select {
     font-family: monospace;
     background: var(--bg-3);
     color: var(--fg-1);
@@ -72,7 +82,9 @@ input {
     padding: 0.25rem;
 }
 
-input:focus-visible {
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
     outline: none;
     border-color: var(--accent);
 }
@@ -92,11 +104,11 @@ input:focus-visible {
     flex: 1;
 }
 
-.search-submit {
+input[type="submit"] {
     cursor: pointer;
 }
 
-.search-submit:active {
+input[type="submit"]:active {
     border-color: var(--accent);
 }
 

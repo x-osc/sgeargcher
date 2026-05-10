@@ -1,0 +1,19 @@
+:root {
+    --bg-1: #2a2a37; /* base01 */
+    --bg-2: #1f1f28; /* base00 / background */
+    --bg-3: #2a2a37; /* base02 */
+    --bg-4: #727169; /* base03 */
+
+    --fg-1: #dcd7ba; /* foreground */
+    --fg-2: #727169; /* color8 */
+    --fg-3: #1f1f28; /* base00 */
+
+    --accent: #c8c093; /* color7 */
+
+    --link: #6a9589; /* color6 */
+    --link-visited: #957fb8; /* color5 */
+
+    --syntax-string: #98bb6c; /* color10 */
+    --syntax-constant: #7e9cd8; /* color4 */
+    --syntax-func: #c34043; /* color1 */
+}

@@ -1,0 +1,19 @@
+:root {
+    --bg-1: #e7dba0;
+    --bg-2: #ebdfa4;
+    --bg-3: #f2ecbc;
+    --bg-4: #8a8980;
+
+    --fg-1: #545464; /* foreground */
+    --fg-2: #8a8980; /* color8 */
+    --fg-3: #f2ecbc;
+
+    --accent: #545464; /* color7 */
+
+    --link: #597b75; /* color6 */
+    --link-visited: #b35b79; /* color5 */
+
+    --syntax-string: #6e915f; /* color10 */
+    --syntax-constant: #4d699b; /* color4 */
+    --syntax-func: #c84053; /* color1 */
+}

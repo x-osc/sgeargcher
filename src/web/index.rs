@@ -1,16 +1,20 @@
 use actix_web::{Responder, get};
 use maud::{DOCTYPE, html};
 
-use crate::web::html_head;
+use crate::web::{head_stuff, settings::ClientSettings};
 
 #[get("/")]
-pub async fn get() -> impl Responder {
+pub async fn get(settings: ClientSettings) -> impl Responder {
     html! {
         (DOCTYPE)
         html {
-            (html_head("sgeargcher"))
+            head {
+                (head_stuff(&settings))
+                title { "sgeargcher" }
+            }
             body.index-page {
-                main {
+                main.dont {
+                    a.settings-link href="settings" { "settings" }
                     div.center-container {
                         h1 { "sgeargcher" }
                         form #search-form action="/search" method="get" {

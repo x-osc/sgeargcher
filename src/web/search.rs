@@ -5,11 +5,19 @@ use maud::{DOCTYPE, Markup, html};
 
 use crate::{
     engine::{SearchResult, scrapers::SearchContext},
-    web::{METASEARCHER, config::DEFAULT_USER_CONFIG, html_head},
+    web::{
+        config::{DEFAULT_USER_CONFIG, METASEARCHER},
+        head_stuff,
+        settings::ClientSettings,
+    },
 };
 
 #[get("/search")]
-pub async fn get(params: web::Query<HashMap<String, String>>, req: HttpRequest) -> impl Responder {
+pub async fn get(
+    params: web::Query<HashMap<String, String>>,
+    req: HttpRequest,
+    settings: ClientSettings,
+) -> impl Responder {
     let query = params.get("q").map(|s| s.trim()).unwrap_or("");
     if query.is_empty() {
         return web::Redirect::to("/")
@@ -45,7 +53,10 @@ pub async fn get(params: web::Query<HashMap<String, String>>, req: HttpRequest) 
     let html = html! {
         (DOCTYPE)
         html {
-            (html_head(&format!("{query} - sgeargcher")))
+            head {
+                (head_stuff(&settings))
+                title { (query) " - sgeargcher" }
+            }
             body.search-page {
                 main {
                     form #search-form action="/search" method="get" {
