@@ -12,9 +12,9 @@ pub trait CompletionEngine: Send + Sync {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[serde(tag = "type", content = "data")]
+#[serde(tag = "type")]
 pub enum CompletionResponse {
-    Search(String),
+    Search { value: String },
 }
 
 pub struct CompletionEngineEntry {

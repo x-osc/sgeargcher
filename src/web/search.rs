@@ -59,11 +59,15 @@ pub async fn get(
                 (head_stuff(&settings))
                 title { (query) " - sgeargcher" }
                 link rel="stylesheet" href="/assets/search.css";
+                link rel="stylesheet" href="/assets/autocomplete.css";
+                script src="/assets/autocomplete.js" defer {}
             }
             body.search-page {
                 main {
                     form #search-form action="/search" method="get" {
-                        input.search-input type="text" name="q" placeholder="sgeargch..." value=(query) autocomplete="off";
+                        div.search-input-wrapper {
+                            input.search-input type="text" name="q" placeholder="sgeargch..." value=(query) autocomplete="off";
+                        }
                         input.search-submit type="submit" value="sgeargch";
                     }
 

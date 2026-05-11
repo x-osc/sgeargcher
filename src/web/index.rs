@@ -11,6 +11,8 @@ pub async fn get(settings: ClientSettings) -> impl Responder {
             head {
                 (head_stuff(&settings))
                 title { "sgeargcher" }
+                link rel="stylesheet" href="/assets/autocomplete.css";
+                script src="/assets/autocomplete.js" defer {}
             }
             body.index-page {
                 main.dont {
@@ -18,7 +20,9 @@ pub async fn get(settings: ClientSettings) -> impl Responder {
                     div.center-container {
                         h1 { "sgeargcher" }
                         form #search-form action="/search" method="get" {
-                            input.search-input type="text" name="q" placeholder="sgeargch..." autofocus autocomplete="off";
+                            div.search-input-wrapper {
+                                input.search-input type="text" name="q" placeholder="sgeargch..." autofocus autocomplete="off";
+                            }
                             input.search-submit type="submit" value="sgeargch";
                         }
                     }

@@ -1,0 +1,21 @@
+.suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+
+    background: var(--bg-1);
+    border: 1px solid var(--bg-4);
+}
+
+.suggestions-item {
+    padding: 2px 4px;
+    cursor: pointer;
+
+    line-height: 1.4;
+}
+
+.suggestions-item:hover,
+.suggestions-item.selected {
+    background: var(--bg-4);
+}

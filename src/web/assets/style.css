@@ -100,6 +100,12 @@ select:focus-visible {
     gap: 0.5rem;
 }
 
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    flex: 1;
+}
+
 .search-input {
     flex: 1;
 }

@@ -1,6 +1,6 @@
 use std::sync::LazyLock;
 
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use async_trait::async_trait;
 use serde_json::Value;
 use url::Url;
@@ -46,12 +46,8 @@ fn parse_results(json: &str) -> anyhow::Result<Vec<CompletionResponse>> {
         .filter_map(|v| Some(v.as_str()?.to_string()))
         .collect();
 
-    if results.is_empty() {
-        return Err(anyhow!("response array did not have any string elements"));
-    }
-
     Ok(results
         .into_iter()
-        .map(|r| CompletionResponse::Search(r))
+        .map(|r| CompletionResponse::Search { value: r })
         .collect())
 }
