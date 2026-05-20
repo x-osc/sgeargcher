@@ -5,12 +5,7 @@ use maud::{DOCTYPE, Markup, html};
 
 use crate::{
     engine::{SearchResult, scrapers::SearchContext},
-    web::{
-        AppState,
-        config::{DEFAULT_USER_CONFIG, METASEARCHER},
-        head_stuff,
-        settings::ClientSettings,
-    },
+    web::{AppState, config::DEFAULT_USER_CONFIG, head_stuff, settings::ClientSettings},
 };
 
 #[get("/search")]
@@ -38,10 +33,11 @@ pub async fn get(
         .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or_default().to_string()))
         .collect();
 
-    let mut config = DEFAULT_USER_CONFIG.merge_into_default(&METASEARCHER);
+    let mut config = DEFAULT_USER_CONFIG.merge_into_default(&data.searcher);
     config.timeout = Duration::from_millis(data.config.timeout);
 
-    let response = METASEARCHER
+    let response = data
+        .searcher
         .run_search(
             SearchContext {
                 query: query.to_owned(),

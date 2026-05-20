@@ -7,6 +7,7 @@ pub mod headers;
 pub mod ip;
 pub mod lorem_ipsum;
 pub mod numbat;
+pub mod tldr;
 pub mod user_agent;
 
 #[async_trait]

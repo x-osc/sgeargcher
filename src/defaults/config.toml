@@ -1,7 +1,11 @@
 # metasearcher config
 
+# directory to store cache files. resolved relative to the config dir by default.
+# use an absolute path if this is unwanted
+cache_dir = "cache"
+
 # directory to look for themes.css files. resolved relative to the config dir by default.
-# use an absolute path (/blah/blah2) if this is unwanted
+# use an absolute path if this is unwanted
 themes_dir = "themes"
 
 # timeout for all engines in ms

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[folder = "src/defaults"]
 struct DefaultConfig;
 
-pub fn get_config_or_create(dir: Option<&PathBuf>) -> anyhow::Result<MetaSearchConfig> {
+pub fn get_config_or_create(dir: Option<&PathBuf>) -> anyhow::Result<ResolvedConfig> {
     let dir = match dir {
         Some(dir) => dir,
         None => {
@@ -43,17 +43,16 @@ pub fn get_config_or_create(dir: Option<&PathBuf>) -> anyhow::Result<MetaSearchC
     }
 
     let contents = fs::read_to_string(config_path)?;
-    let mut config = toml::from_str::<MetaSearchConfig>(&contents)?;
-    config.config_dir = dir.to_owned();
-    Ok(config)
+    let config = toml::from_str::<MetaSearchConfig>(&contents)?;
+
+    Ok(ResolvedConfig::from_config(config, dir.clone()))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct MetaSearchConfig {
-    #[serde(skip)]
-    pub config_dir: PathBuf,
     pub themes_dir: PathBuf,
+    pub cache_dir: PathBuf,
     pub timeout: u64,
     pub server: ServerConfig,
 }
@@ -61,8 +60,8 @@ pub struct MetaSearchConfig {
 impl Default for MetaSearchConfig {
     fn default() -> Self {
         Self {
-            config_dir: "config".into(),
             themes_dir: "themes".into(),
+            cache_dir: "cache".into(),
             timeout: 3500,
             server: Default::default(),
         }
@@ -81,6 +80,28 @@ impl Default for ServerConfig {
         Self {
             bind: "127.0.0.1".into(),
             port: 7367,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolvedConfig {
+    #[expect(dead_code)]
+    pub config_dir: PathBuf,
+    pub themes_dir: PathBuf,
+    pub cache_dir: PathBuf,
+    pub timeout: u64,
+    pub server: ServerConfig,
+}
+
+impl ResolvedConfig {
+    pub fn from_config(config: MetaSearchConfig, config_dir: PathBuf) -> Self {
+        Self {
+            config_dir: config_dir.clone(),
+            themes_dir: config_dir.join(config.themes_dir),
+            cache_dir: config_dir.join(config.cache_dir),
+            timeout: config.timeout,
+            server: config.server,
         }
     }
 }

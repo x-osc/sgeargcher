@@ -1,21 +1,25 @@
 use std::{sync::LazyLock, time::Duration};
 
-use crate::engine::{
-    MetaSearcher,
-    answers::{
-        AnswerEngineMetadata, dictionary::DictionaryAnswer, headers::HeadersAnswer, ip::IpAnswer,
-        lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer, user_agent::UserAgentAnswer,
-    },
-    autocomplete::google::GoogleCompletion,
-    config::{CustomRank, EngineSetting, SearchConfig},
-    scrapers::{
-        EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
-        marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
-        yahoo_japan::YahooJapanSearch,
+use crate::{
+    config::ResolvedConfig,
+    engine::{
+        MetaSearcher,
+        answers::{
+            AnswerEngineMetadata, dictionary::DictionaryAnswer, headers::HeadersAnswer,
+            ip::IpAnswer, lorem_ipsum::LoremIpsumAnswer, numbat::NumbatAnswer, tldr::TldrAnswer,
+            user_agent::UserAgentAnswer,
+        },
+        autocomplete::google::GoogleCompletion,
+        config::{CustomRank, EngineSetting, SearchConfig},
+        scrapers::{
+            EngineMetadata, brave::BraveSearch, duckduckgo::DuckDuckGoSearch,
+            marginalia::MarginaliaSearch, mojeek::MojeekSearch, wiby::WibySearch,
+            yahoo_japan::YahooJapanSearch,
+        },
     },
 };
 
-pub static METASEARCHER: LazyLock<MetaSearcher> = LazyLock::new(|| {
+pub async fn metasearcher(config: &ResolvedConfig) -> anyhow::Result<MetaSearcher> {
     let mut searcher = MetaSearcher::new();
     searcher.add_engine(
         Box::new(DuckDuckGoSearch),
@@ -53,9 +57,13 @@ pub static METASEARCHER: LazyLock<MetaSearcher> = LazyLock::new(|| {
         Box::new(HeadersAnswer),
         AnswerEngineMetadata::new("headers"),
     );
+    searcher.add_answer_engine(
+        Box::new(TldrAnswer::new(config.cache_dir.join("tldr")).await?),
+        AnswerEngineMetadata::new("tldr"),
+    );
 
-    searcher
-});
+    Ok(searcher)
+}
 
 pub static DEFAULT_USER_CONFIG: LazyLock<SearchConfig> = LazyLock::new(|| SearchConfig {
     engine_settings: [

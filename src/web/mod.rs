@@ -1,11 +1,15 @@
-use std::{fs, path::PathBuf};
+use std::fs;
 
 use actix_files::Files;
 use actix_web::{App, HttpResponse, HttpServer, Responder, get, middleware, web};
 use maud::{DOCTYPE, Markup, html};
 use rust_embed::RustEmbed;
 
-use crate::{config::MetaSearchConfig, web::settings::ClientSettings};
+use crate::{
+    config::ResolvedConfig,
+    engine::MetaSearcher,
+    web::{config::metasearcher, settings::ClientSettings},
+};
 
 mod autocomplete;
 mod config;
@@ -18,17 +22,15 @@ mod utils;
 #[folder = "src/web/assets"]
 struct Assets;
 
-#[derive(Clone)]
 pub struct AppState {
-    pub config: MetaSearchConfig,
-    pub themes_dir: PathBuf,
+    pub searcher: MetaSearcher,
+    pub config: ResolvedConfig,
     pub available_themes: Vec<String>,
 }
 
 impl AppState {
-    pub fn new(config: MetaSearchConfig) -> anyhow::Result<Self> {
-        let themes_dir = config.config_dir.join(&config.themes_dir);
-        let available_themes = fs::read_dir(&themes_dir)?
+    pub async fn new(config: ResolvedConfig) -> anyhow::Result<Self> {
+        let available_themes = fs::read_dir(&config.themes_dir)?
             .filter_map(|e| {
                 let e = e.ok()?;
                 if !e.file_type().ok()?.is_file() {
@@ -44,17 +46,20 @@ impl AppState {
             })
             .collect();
 
+        let searcher = metasearcher(&config).await?;
+
         Ok(Self {
+            searcher,
             config,
-            themes_dir,
             available_themes,
         })
     }
 }
 
-pub async fn run(config: MetaSearchConfig) -> anyhow::Result<()> {
-    let state = AppState::new(config)?;
-    let data = web::Data::new(state.clone());
+pub async fn run(config: ResolvedConfig) -> anyhow::Result<()> {
+    let state = AppState::new(config).await?;
+    let config = state.config.clone();
+    let data = web::Data::new(state);
 
     let server = HttpServer::new(move || {
         App::new()
@@ -66,14 +71,14 @@ pub async fn run(config: MetaSearchConfig) -> anyhow::Result<()> {
             .service(autocomplete::get)
             .service(settings::get)
             .service(settings::post)
-            .service(Files::new("/themes", &data.themes_dir))
+            .service(Files::new("/themes", &data.config.themes_dir))
             .service(static_handler)
             .default_service(web::to(not_found))
     });
 
-    let (bind, port) = (state.config.server.bind.clone(), state.config.server.port);
+    let (bind, port) = (config.server.bind.clone(), config.server.port);
     println!("starting webserver on {}:{}", bind, port);
-    println!("serving themes from {}", state.themes_dir.display());
+    println!("serving themes from {}", config.themes_dir.display());
     server.bind((bind.as_str(), port))?.run().await?;
 
     Ok(())

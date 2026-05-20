@@ -4,10 +4,7 @@ use actix_web::{HttpRequest, HttpResponse, Responder, get, web};
 
 use crate::{
     engine::scrapers::SearchContext,
-    web::{
-        AppState,
-        config::{DEFAULT_USER_CONFIG, METASEARCHER},
-    },
+    web::{AppState, config::DEFAULT_USER_CONFIG},
 };
 
 #[get("/complete")]
@@ -31,10 +28,11 @@ pub async fn get(
         .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or_default().to_string()))
         .collect();
 
-    let mut config = DEFAULT_USER_CONFIG.merge_into_default(&METASEARCHER);
+    let mut config = DEFAULT_USER_CONFIG.merge_into_default(&data.searcher);
     config.timeout = Duration::from_millis(data.config.timeout);
 
-    let response = METASEARCHER
+    let response = data
+        .searcher
         .get_autocomplete(
             SearchContext {
                 query: query.to_owned(),
