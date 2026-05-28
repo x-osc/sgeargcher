@@ -115,9 +115,9 @@ fn markup_to_html(markup: numbat::markup::Markup) -> String {
     let mut html = String::new();
     for FormattedString(_output_type, format_type, content) in markup.0 {
         let class = match format_type {
-            FormatType::Value => "calc-constant",
-            FormatType::String => "calc-string",
-            FormatType::Identifier => "calc-func",
+            FormatType::Value => "calc-constant syn-constant",
+            FormatType::String => "calc-string syn-string",
+            FormatType::Identifier => "calc-func syn-func",
             _ => "",
         };
         if class.is_empty() {

@@ -63,13 +63,16 @@
 }
 
 .calc-constant {
-    color: var(--syntax-constant);
     white-space: pre-wrap;
 }
-.calc-string {
+
+.syn-constant {
+    color: var(--syntax-constant);
+}
+.syn-string {
     color: var(--syntax-string);
 }
-.calc-func {
+.syn-func {
     color: var(--syntax-func);
 }
 
